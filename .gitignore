@@ -1,0 +1,4 @@
+.env
+*.log
+grafana/provisioning/dashboards/*.json
+!grafana/provisioning/dashboards/.gitkeep
