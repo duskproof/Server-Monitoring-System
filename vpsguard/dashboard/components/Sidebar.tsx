@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
 
+import { BrandMark } from '@/components/BrandMark';
 import { useAlerts } from '@/hooks/queries';
 import { cn } from '@/lib/utils';
 import { useUiStore } from '@/store/ui';
@@ -87,11 +88,7 @@ export function Sidebar() {
         )}
       >
         <div className={cn('flex h-16 items-center border-b border-line px-4', collapsed && 'justify-center px-2')}>
-          {!collapsed ? (
-            <span className="brand-text text-base">DuskProof Guard</span>
-          ) : (
-            <span className="text-sm font-semibold tracking-tight text-brand">DP</span>
-          )}
+          <BrandMark compact={collapsed} />
         </div>
 
         {nav}
@@ -129,9 +126,7 @@ export function Sidebar() {
           )}
         >
           <div className="flex h-16 items-center justify-between border-b border-line px-4">
-            <div className="flex items-center gap-2.5">
-              <span className="brand-text text-base">DuskProof Guard</span>
-            </div>
+            <BrandMark />
             <button
               type="button"
               onClick={() => setMobileNav(false)}

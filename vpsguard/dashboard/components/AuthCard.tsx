@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { BrandMark } from '@/components/BrandMark';
+
 /** Shared split-screen shell for the login and register screens. */
 export function AuthShell({
   title,
@@ -15,9 +17,7 @@ export function AuthShell({
   return (
     <main className="flex min-h-[100dvh] flex-col lg:flex-row">
       <section className="brand-panel relative hidden flex-1 flex-col justify-between overflow-hidden p-10 text-slate-100 lg:flex">
-        <div>
-          <span className="brand-text text-lg">DuskProof Guard</span>
-        </div>
+        <BrandMark />
 
         <div className="max-w-md">
           <h2 className="text-3xl font-semibold leading-tight">
@@ -46,10 +46,10 @@ export function AuthShell({
         <p className="text-xs text-slate-400">© {new Date().getFullYear()} DuskProof Guard</p>
       </section>
 
-      <section className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
+      <section className="flex flex-1 items-center justify-center bg-bg px-5 py-10 sm:px-8">
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
-            <span className="brand-text text-lg">DuskProof Guard</span>
+            <BrandMark guardClassName="text-content dark:text-white" />
           </div>
 
           <h1 className="text-2xl font-semibold text-content">{title}</h1>
