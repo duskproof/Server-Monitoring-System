@@ -7,7 +7,7 @@ import { downloadBlob } from '@/lib/utils';
 export async function exportSvgAsPng(
   container: HTMLElement | null,
   filename: string,
-  backgroundColor = '#0b1220',
+  backgroundColor = '#0c0814',
   scale = 2,
 ): Promise<void> {
   if (!container) throw new Error('Nothing to export yet');

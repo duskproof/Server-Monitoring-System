@@ -9,7 +9,8 @@ export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'dan
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-primary text-primary-fg hover:bg-primary/90 focus-visible:outline-primary shadow-sm',
+  primary:
+    'bg-gradient-to-r from-primary to-brand text-primary-fg hover:from-primary/90 hover:to-brand/90 focus-visible:outline-primary shadow-sm shadow-primary/20',
   secondary: 'bg-elevated text-content hover:bg-elevated/70 border border-line',
   outline: 'border border-line bg-transparent text-content hover:bg-elevated',
   ghost: 'bg-transparent text-muted hover:bg-elevated hover:text-content',

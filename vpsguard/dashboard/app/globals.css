@@ -4,37 +4,39 @@
 
 @layer base {
   :root {
-    --bg: 210 20% 98%;
+    --bg: 270 30% 97%;
     --surface: 0 0% 100%;
-    --elevated: 214 32% 94%;
-    --line: 214 25% 88%;
-    --content: 222 47% 11%;
-    --muted: 215 16% 45%;
+    --elevated: 270 25% 94%;
+    --line: 270 18% 88%;
+    --content: 270 35% 12%;
+    --muted: 270 12% 42%;
 
-    --primary: 217 91% 55%;
+    --brand: 320 90% 52%;
+    --primary: 270 75% 52%;
     --primary-fg: 0 0% 100%;
-    --success: 152 62% 38%;
+    --success: 142 72% 38%;
     --warning: 32 92% 45%;
     --danger: 0 72% 50%;
-    --info: 199 89% 45%;
+    --info: 280 70% 48%;
 
     --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
 
   .dark {
-    --bg: 222 47% 7%;
-    --surface: 222 41% 10%;
-    --elevated: 222 32% 16%;
-    --line: 220 24% 20%;
-    --content: 210 40% 96%;
-    --muted: 215 20% 62%;
+    --bg: 270 38% 5%;
+    --surface: 270 32% 9%;
+    --elevated: 270 28% 13%;
+    --line: 270 22% 18%;
+    --content: 270 20% 96%;
+    --muted: 270 14% 62%;
 
-    --primary: 217 91% 60%;
-    --primary-fg: 222 47% 8%;
-    --success: 152 60% 45%;
+    --brand: 320 95% 62%;
+    --primary: 270 85% 62%;
+    --primary-fg: 0 0% 100%;
+    --success: 142 76% 50%;
     --warning: 38 92% 55%;
     --danger: 0 84% 62%;
-    --info: 199 89% 55%;
+    --info: 280 80% 65%;
   }
 
   * {
@@ -51,8 +53,15 @@
     min-height: 100dvh;
   }
 
+  .dark body {
+    background-color: hsl(var(--bg));
+    background-image:
+      radial-gradient(ellipse 120% 80% at 50% -30%, hsl(270 60% 18% / 0.45), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 100% 0%, hsl(320 70% 22% / 0.18), transparent 50%);
+  }
+
   ::selection {
-    background-color: hsl(var(--primary) / 0.3);
+    background-color: hsl(var(--brand) / 0.35);
   }
 }
 
@@ -76,9 +85,19 @@
     background: transparent;
   }
 
-  /* Focus ring shared by interactive shells that are not <button> elements. */
   .focus-ring {
     @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
+  .brand-text {
+    @apply bg-gradient-to-r from-brand via-primary to-brand bg-clip-text font-semibold tracking-tight text-transparent;
+  }
+
+  .brand-panel {
+    background-image:
+      radial-gradient(ellipse 90% 70% at 20% 0%, hsl(320 80% 28% / 0.35), transparent 55%),
+      radial-gradient(ellipse 80% 60% at 80% 100%, hsl(270 70% 22% / 0.4), transparent 50%),
+      linear-gradient(145deg, hsl(270 40% 6%), hsl(270 38% 4%) 45%, hsl(280 35% 5%));
   }
 }
 

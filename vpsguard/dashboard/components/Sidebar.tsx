@@ -53,7 +53,9 @@ export function Sidebar() {
             title={collapsed ? item.label : undefined}
             className={cn(
               'focus-ring group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-              active ? 'bg-primary/12 text-primary' : 'text-muted hover:bg-elevated hover:text-content',
+              active
+                ? 'bg-primary/15 text-primary shadow-sm shadow-primary/10'
+                : 'text-muted hover:bg-elevated hover:text-content',
               collapsed && 'lg:justify-center lg:px-2',
             )}
           >
@@ -86,9 +88,9 @@ export function Sidebar() {
       >
         <div className={cn('flex h-16 items-center border-b border-line px-4', collapsed && 'justify-center px-2')}>
           {!collapsed ? (
-            <span className="text-base font-semibold tracking-tight text-content">DuskProof Guard</span>
+            <span className="brand-text text-base">DuskProof Guard</span>
           ) : (
-            <span className="text-sm font-semibold tracking-tight text-content">DP</span>
+            <span className="text-sm font-semibold tracking-tight text-brand">DP</span>
           )}
         </div>
 
@@ -128,7 +130,7 @@ export function Sidebar() {
         >
           <div className="flex h-16 items-center justify-between border-b border-line px-4">
             <div className="flex items-center gap-2.5">
-              <span className="text-base font-semibold tracking-tight text-content">DuskProof Guard</span>
+              <span className="brand-text text-base">DuskProof Guard</span>
             </div>
             <button
               type="button"

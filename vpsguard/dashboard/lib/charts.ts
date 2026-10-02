@@ -8,16 +8,16 @@ import { slugify } from '@/lib/utils';
  * export rasterises the SVG outside of the document's cascade.
  */
 export const CHART_PALETTE = [
-  '#3b82f6',
   '#a855f7',
-  '#22c55e',
-  '#f59e0b',
-  '#ef4444',
-  '#06b6d4',
-  '#ec4899',
-  '#84cc16',
-  '#f97316',
-  '#8b5cf6',
+  '#e879f9',
+  '#4ade80',
+  '#f472b6',
+  '#818cf8',
+  '#22d3ee',
+  '#fbbf24',
+  '#fb7185',
+  '#34d399',
+  '#c084fc',
 ];
 
 export interface ChartSeriesConfig {
@@ -118,7 +118,7 @@ export function chartTheme(dark: boolean): ChartTheme {
         tooltipBg: '#0f172a',
         tooltipBorder: '#1e293b',
         tooltipText: '#e2e8f0',
-        exportBackground: '#0b1220',
+        exportBackground: '#0c0814',
       }
     : {
         grid: '#e2e8f0',

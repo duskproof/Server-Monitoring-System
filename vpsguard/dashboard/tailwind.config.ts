@@ -18,6 +18,7 @@ const config: Config = {
         line: 'hsl(var(--line) / <alpha-value>)',
         content: 'hsl(var(--content) / <alpha-value>)',
         muted: 'hsl(var(--muted) / <alpha-value>)',
+        brand: 'hsl(var(--brand) / <alpha-value>)',
         primary: 'hsl(var(--primary) / <alpha-value>)',
         'primary-fg': 'hsl(var(--primary-fg) / <alpha-value>)',
         success: 'hsl(var(--success) / <alpha-value>)',

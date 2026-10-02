@@ -17,7 +17,7 @@ import '@xterm/xterm/css/xterm.css';
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'closed';
 
 const DARK_THEME = {
-  background: '#0b1220',
+  background: '#0c0814',
   foreground: '#e2e8f0',
   cursor: '#38bdf8',
   selectionBackground: '#1e40af80',
@@ -230,7 +230,7 @@ export function TerminalTab({ serverId, serverName }: { serverId: string; server
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-line bg-[#0b1220] p-3">
+      <div className="overflow-hidden rounded-2xl border border-line bg-[#0c0814] p-3">
         <div ref={containerRef} className="h-[520px] w-full" />
       </div>
 
