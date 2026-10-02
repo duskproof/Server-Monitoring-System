@@ -33,10 +33,10 @@ import { ServicesTab } from '@/components/server-detail/ServicesTab';
 import { SslTab } from '@/components/server-detail/SslTab';
 import { TemperaturesTab } from '@/components/server-detail/TemperaturesTab';
 import { TerminalTab } from '@/components/server-detail/TerminalTab';
+import { DeleteServerDialog } from '@/components/servers/DeleteServerDialog';
 import { StatusPill } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ErrorState } from '@/components/ui/EmptyState';
-import { ConfirmDialog } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Tabs, type TabItem } from '@/components/ui/Tabs';
 import { useDeleteServer, useServer } from '@/hooks/queries';
@@ -266,18 +266,10 @@ export function ServerDetailView({ serverId }: { serverId: string }) {
         {activeTab === 'terminal' ? <TerminalTab serverId={server.id} serverName={server.name} /> : null}
       </ErrorBoundary>
 
-      <ConfirmDialog
+      <DeleteServerDialog
         open={confirmDelete}
-        title="Delete server"
-        destructive
+        serverName={server.name}
         loading={deleteServer.isPending}
-        confirmLabel="Delete"
-        message={
-          <>
-            Deleting <strong className="text-content">{server.name}</strong> removes its metric history and revokes the
-            agent API key. This action cannot be undone.
-          </>
-        }
         onConfirm={async () => {
           await deleteServer.mutateAsync(server.id).catch(() => undefined);
           setConfirmDelete(false);

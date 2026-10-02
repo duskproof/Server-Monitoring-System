@@ -6,12 +6,12 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AddServerModal } from '@/components/servers/AddServerModal';
+import { DeleteServerDialog } from '@/components/servers/DeleteServerDialog';
 import { StatusPill } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { EmptyState, ErrorState } from '@/components/ui/EmptyState';
 import { UsageBar } from '@/components/ui/Gauge';
 import { Input } from '@/components/ui/Input';
-import { ConfirmDialog } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import {
@@ -357,18 +357,10 @@ export function ServersView() {
 
       <AddServerModal open={addOpen} onClose={() => setAddOpen(false)} />
 
-      <ConfirmDialog
+      <DeleteServerDialog
         open={pendingDelete !== null}
-        title="Delete server"
-        destructive
+        serverName={pendingDelete?.name ?? ''}
         loading={deleteServer.isPending}
-        confirmLabel="Delete"
-        message={
-          <>
-            Deleting <strong className="text-content">{pendingDelete?.name}</strong> removes its history and revokes the
-            agent API key. This action cannot be undone.
-          </>
-        }
         onConfirm={confirmDelete}
         onCancel={() => setPendingDelete(null)}
       />
