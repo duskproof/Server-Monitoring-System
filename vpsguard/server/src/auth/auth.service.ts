@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
+import { AlertsService } from '../alerts/alerts.service';
 import { User, UserRole } from '../database/entities';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { LoginDto, RegisterDto } from './dto';
@@ -38,6 +39,7 @@ export class AuthService implements OnModuleInit {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly organizations: OrganizationsService,
+    private readonly alerts: AlertsService,
   ) {}
 
   /** Bootstraps a default admin + empty workspace so a fresh deployment is usable. */
@@ -57,8 +59,9 @@ export class AuthService implements OnModuleInit {
         organizationId: org.id,
       }),
     );
+    await this.alerts.seedDefaultRules(org.id);
     this.logger.warn(
-      `Bootstrapped default admin "${email}" in workspace ${org.id} (no default alert rules).`,
+      `Bootstrapped default admin "${email}" in workspace ${org.id}. Change the password now.`,
     );
   }
 
@@ -84,7 +87,7 @@ export class AuthService implements OnModuleInit {
         organizationId: org.id,
       }),
     );
-    // Empty cabinet: no default alert rules until the owner adds servers / creates them.
+    await this.alerts.seedDefaultRules(org.id);
     return this.issueTokens(user);
   }
 

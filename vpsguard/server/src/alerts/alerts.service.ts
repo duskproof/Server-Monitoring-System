@@ -1,26 +1,17 @@
 import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import {
   Alert,
+  AlertCondition,
   AlertRule,
+  AlertSeverity,
   AlertStatus,
   MonitoredServer,
+  Organization,
 } from '../database/entities';
 import { AlertEngineService } from './alert-engine.service';
 import { CreateAlertRuleDto, UpdateAlertRuleDto } from './dto';
-
-/** Names previously auto-injected on register/bootstrap — never seed these again. */
-const LEGACY_AUTO_SEED_RULE_NAMES = [
-  'High CPU usage',
-  'High memory usage',
-  'Low disk space',
-  'Agent offline',
-  'SSL certificate expiring',
-  'Disk projected to fill within 3 days',
-  'CPU temperature high',
-  'Failed SSH attempts spike',
-];
 
 @Injectable()
 export class AlertsService implements OnModuleInit {
@@ -29,26 +20,15 @@ export class AlertsService implements OnModuleInit {
   constructor(
     @InjectRepository(Alert) private readonly alerts: Repository<Alert>,
     @InjectRepository(AlertRule) private readonly rules: Repository<AlertRule>,
+    @InjectRepository(Organization) private readonly orgs: Repository<Organization>,
     private readonly engine: AlertEngineService,
   ) {}
 
   async onModuleInit(): Promise<void> {
-    await this.purgeLegacyAutoSeededRules();
-  }
-
-  /**
-   * Removes the old “default 8 rules” that were auto-created for every cabinet.
-   * Workspaces stay empty until the owner creates their own rules.
-   */
-  private async purgeLegacyAutoSeededRules(): Promise<void> {
-    const result = await this.rules.delete({
-      name: In(LEGACY_AUTO_SEED_RULE_NAMES),
-    });
-    const orphans = await this.rules.delete({ organizationId: IsNull() });
-    const removed = (result.affected ?? 0) + (orphans.affected ?? 0);
-    if (removed > 0) {
-      this.engine.invalidateRulesCache();
-      this.logger.warn(`Removed ${removed} legacy auto-seeded / orphan alert rule(s)`);
+    // Backfill recommended baseline rules for every workspace (idempotent by name).
+    const organizations = await this.orgs.find();
+    for (const org of organizations) {
+      await this.seedDefaultRules(org.id);
     }
   }
 
@@ -58,7 +38,7 @@ export class AlertsService implements OnModuleInit {
       .innerJoin(MonitoredServer, 'server', 'server.id = alert.server_id')
       .where('server.organization_id = :organizationId', { organizationId })
       .orderBy('alert.created_at', 'DESC')
-      .take(Math.min(limit, 500));
+      .take(Math.min(Math.max(limit || 200, 1), 500));
 
     if (status) qb.andWhere('alert.status = :status', { status });
     if (serverId) qb.andWhere('alert.server_id = :serverId', { serverId });
@@ -124,5 +104,100 @@ export class AlertsService implements OnModuleInit {
     if (!result.affected) throw new NotFoundException('Alert rule not found');
     this.engine.invalidateRulesCache();
     this.engine.forget((key) => key.startsWith(`${id}:`));
+  }
+
+  /**
+   * Recommended baseline for every workspace: load, capacity, agent health,
+   * SSL and basic security. Idempotent per organization + rule name.
+   */
+  async seedDefaultRules(organizationId: string): Promise<void> {
+    const defaults = [
+      {
+        name: 'High CPU usage',
+        metric: 'cpu.percent',
+        condition: AlertCondition.GT,
+        threshold: 90,
+        durationSeconds: 300,
+        severity: AlertSeverity.CRITICAL,
+        channels: ['telegram'],
+      },
+      {
+        name: 'High memory usage',
+        metric: 'memory.used_percent',
+        condition: AlertCondition.GT,
+        threshold: 90,
+        durationSeconds: 300,
+        severity: AlertSeverity.WARNING,
+        channels: ['telegram'],
+      },
+      {
+        name: 'Low disk space',
+        metric: 'disk.used_percent',
+        condition: AlertCondition.GT,
+        threshold: 85,
+        durationSeconds: 600,
+        severity: AlertSeverity.WARNING,
+        channels: ['telegram'],
+      },
+      {
+        name: 'Agent offline',
+        metric: 'agent.offline',
+        condition: AlertCondition.EQ,
+        threshold: 1,
+        durationSeconds: 0,
+        severity: AlertSeverity.CRITICAL,
+        channels: ['telegram'],
+      },
+      {
+        name: 'SSL certificate expiring',
+        metric: 'ssl.days_left',
+        condition: AlertCondition.LT,
+        threshold: 14,
+        durationSeconds: 0,
+        severity: AlertSeverity.WARNING,
+        channels: ['telegram'],
+      },
+      {
+        name: 'Disk projected to fill within 3 days',
+        metric: 'disk.forecast_days',
+        condition: AlertCondition.LT,
+        threshold: 3,
+        durationSeconds: 0,
+        severity: AlertSeverity.WARNING,
+        channels: ['telegram'],
+      },
+      {
+        name: 'CPU temperature high',
+        metric: 'cpu.temperature',
+        condition: AlertCondition.GT,
+        threshold: 80,
+        durationSeconds: 60,
+        severity: AlertSeverity.WARNING,
+        channels: ['telegram'],
+      },
+      {
+        name: 'Failed SSH attempts spike',
+        metric: 'security.failed_ssh_attempts',
+        condition: AlertCondition.GT,
+        threshold: 20,
+        durationSeconds: 300,
+        severity: AlertSeverity.CRITICAL,
+        channels: ['telegram'],
+      },
+    ];
+
+    let created = 0;
+    for (const rule of defaults) {
+      const existing = await this.rules.findOne({
+        where: { name: rule.name, organizationId },
+      });
+      if (existing) continue;
+      await this.rules.save(this.rules.create({ ...rule, organizationId }));
+      created += 1;
+    }
+    if (created > 0) {
+      this.engine.invalidateRulesCache();
+      this.logger.log(`Seeded ${created} baseline alert rule(s) for workspace ${organizationId}`);
+    }
   }
 }
