@@ -3,7 +3,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
-  ArrowRight,
   BellRing,
   CircleSlash,
   Cpu,
@@ -17,7 +16,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Sparkline } from '@/components/charts/Sparkline';
 import { ReportsButton } from '@/components/ReportsButton';
+import { AddServerModal } from '@/components/servers/AddServerModal';
 import { AlertStatusBadge, SeverityBadge, StatusPill } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { EmptyState, ErrorState } from '@/components/ui/EmptyState';
 import { Gauge } from '@/components/ui/Gauge';
@@ -41,6 +42,7 @@ export function OverviewView() {
 
   const [liveOverview, setLiveOverview] = useState<Overview | null>(null);
   const [history, setHistory] = useState<SparkHistory>({});
+  const [addOpen, setAddOpen] = useState(false);
 
   useOverviewSubscription(true);
 
@@ -206,13 +208,9 @@ export function OverviewView() {
         </div>
         <div className="flex items-center gap-2">
           <ReportsButton servers={servers} />
-          <Link
-            href="/cabinet/servers"
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-medium text-primary-fg transition-colors hover:bg-primary/90"
-          >
-            Manage servers
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            Add server
+          </Button>
         </div>
       </div>
 
@@ -325,12 +323,9 @@ export function OverviewView() {
             title="No servers registered"
             description="Add your first server to start collecting metrics."
             action={
-              <Link
-                href="/cabinet/servers"
-                className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-fg hover:bg-primary/90"
-              >
+              <Button size="sm" onClick={() => setAddOpen(true)}>
                 Add a server
-              </Link>
+              </Button>
             }
           />
         ) : (
@@ -370,6 +365,8 @@ export function OverviewView() {
           </div>
         )}
       </Card>
+
+      <AddServerModal open={addOpen} onClose={() => setAddOpen(false)} />
     </div>
   );
 }
