@@ -11,7 +11,6 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
-import { AlertsService } from '../alerts/alerts.service';
 import { User, UserRole } from '../database/entities';
 import { OrganizationsService } from '../organizations/organizations.service';
 import { LoginDto, RegisterDto } from './dto';
