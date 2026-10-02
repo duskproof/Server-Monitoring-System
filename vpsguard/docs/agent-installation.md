@@ -251,7 +251,7 @@ file only needs `[server] url` and `[server] api_key`.
 | `log_level` | `info` | One of `debug`, `info`, `warning`, `error`, `critical` |
 | `buffer_size` | `1000` | Maximum payloads held in the SQLite offline buffer. The oldest are dropped when exceeded |
 | `buffer_retention_hours` | `24` | Buffered payloads older than this are purged |
-| `allow_commands` | `true` | Set to `false` to reject every remote command with status `rejected` |
+| `allow_commands` | `false` | Set to `true` (or install with `--enable-commands`) to accept remote commands from the dashboard |
 | `command_user` | `vpsguard` | Unprivileged account that `run_script` payloads are dropped to |
 | `command_timeout` | `60` | Default command timeout in seconds. A server-supplied timeout is honoured, capped at 900 |
 | `verify_tls` | `true` | TLS certificate verification. Disabling it logs a loud warning and allows interception — only for a private CA you cannot install |
@@ -308,7 +308,7 @@ interval = 30
 slow_interval = 300
 log_level = info
 top_processes = 15
-allow_commands = true
+allow_commands = false
 command_user = vpsguard
 
 [metrics]

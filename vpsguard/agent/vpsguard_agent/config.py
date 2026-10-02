@@ -49,7 +49,7 @@ _DEFAULTS: Dict[str, Dict[str, str]] = {
         "log_level": "info",
         "buffer_size": "1000",
         "buffer_retention_hours": "24",
-        "allow_commands": "true",
+        "allow_commands": "false",
         "command_user": "vpsguard",
         "command_timeout": "60",
         "verify_tls": "true",
@@ -101,7 +101,7 @@ class Config:
     log_level: str = "info"
     buffer_size: int = 1000
     buffer_retention_hours: int = 24
-    allow_commands: bool = True
+    allow_commands: bool = False
     command_user: str = "vpsguard"
     command_timeout: int = 60
     verify_tls: bool = True

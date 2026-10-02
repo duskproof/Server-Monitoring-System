@@ -122,7 +122,7 @@ def test_defaults_are_applied_for_a_minimal_config(tmp_path):
     assert config.log_level == "info"
     assert config.buffer_size == 1000
     assert config.buffer_retention_hours == 24
-    assert config.allow_commands is True
+    assert config.allow_commands is False
     assert config.command_user == "vpsguard"
     assert config.command_timeout == 60
     assert config.verify_tls is True

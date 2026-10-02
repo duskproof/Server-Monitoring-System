@@ -26,7 +26,7 @@ API_KEY=""
 INTERVAL="30"
 SLOW_INTERVAL="300"
 LOG_LEVEL="info"
-ALLOW_COMMANDS="true"
+ALLOW_COMMANDS="false"
 VERIFY_TLS="true"
 SOURCE=""
 DO_UNINSTALL="false"
@@ -66,7 +66,8 @@ Options:
   --interval SECONDS        Fast tier interval (default: 30)
   --slow-interval SECONDS   Slow tier interval (default: 300)
   --log-level LEVEL         debug|info|warning|error|critical (default: info)
-  --no-commands             Disable remote command execution
+  --no-commands             Disable remote command execution (default)
+  --enable-commands         Allow remote commands from the dashboard (opt-in)
   --no-verify-tls           Disable TLS verification (testing only)
   --source SPEC             pip requirement, local path or URL of the agent
                             package (default: local source tree, then PyPI)
@@ -87,6 +88,7 @@ parse_args() {
             --log-level)      LOG_LEVEL="${2:-}"; shift 2 ;;
             --source)         SOURCE="${2:-}"; shift 2 ;;
             --no-commands)    ALLOW_COMMANDS="false"; shift ;;
+            --enable-commands) ALLOW_COMMANDS="true"; shift ;;
             --no-verify-tls)  VERIFY_TLS="false"; shift ;;
             --uninstall)      DO_UNINSTALL="true"; shift ;;
             --purge)          DO_PURGE="true"; shift ;;
