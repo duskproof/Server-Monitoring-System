@@ -2,7 +2,7 @@
 
 import { Check, Copy, KeyRound, ServerIcon, TerminalSquare } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 
 import { Button } from '@/components/ui/Button';
@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { useCreateServer, useGroups } from '@/hooks/queries';
+import { useServerSubscription, useSocketEvent } from '@/hooks/useSocket';
 import { API_URL } from '@/lib/api';
-import type { CreatedServer } from '@/lib/types';
+import type { CreatedServer, LiveMetricsPayload, ServerStatusPayload } from '@/lib/types';
 import { copyToClipboard } from '@/lib/utils';
 
 interface AddServerModalProps {
@@ -60,6 +61,7 @@ export function AddServerModal({ open, onClose }: AddServerModalProps) {
   const [nameError, setNameError] = useState<string | undefined>();
   const [created, setCreated] = useState<CreatedServer | null>(null);
   const [copied, setCopied] = useState<'key' | 'command' | null>(null);
+  const closedOnSignal = useRef(false);
 
   const suggestedUrl = open ? defaultPublicUrl() : API_URL;
 
@@ -71,12 +73,50 @@ export function AddServerModal({ open, onClose }: AddServerModalProps) {
     setNameError(undefined);
     setCreated(null);
     setCopied(null);
+    closedOnSignal.current = false;
   };
 
   const close = () => {
     reset();
     onClose();
   };
+
+  const closeAfterAgentSignal = () => {
+    if (closedOnSignal.current) return;
+    closedOnSignal.current = true;
+    toast.success('Agent connected — server is online');
+    reset();
+    onClose();
+  };
+
+  // Join the server room so the first metrics packet reaches this client too.
+  useServerSubscription(created?.id);
+
+  useSocketEvent<ServerStatusPayload>(
+    'server:status',
+    (payload) => {
+      if (!created?.id || payload?.serverId !== created.id) return;
+      if (payload.status === 'online' || payload.status === 'warning') {
+        closeAfterAgentSignal();
+      }
+    },
+    Boolean(created?.id),
+  );
+
+  useSocketEvent<LiveMetricsPayload>(
+    'metrics',
+    (payload) => {
+      if (!created?.id || payload?.serverId !== created.id) return;
+      closeAfterAgentSignal();
+    },
+    Boolean(created?.id),
+  );
+
+  useEffect(() => {
+    if (!open) {
+      closedOnSignal.current = false;
+    }
+  }, [open]);
 
   const onSubmit = async () => {
     if (name.trim().length < 2) {
@@ -94,6 +134,7 @@ export function AddServerModal({ open, onClose }: AddServerModalProps) {
         ipAddress: ipAddress.trim() || null,
         publicUrl: resolvedPublicUrl,
       });
+      closedOnSignal.current = false;
       setCreated({
         ...server,
         // Always rebuild so the dialog never shows a leftover <your-server> placeholder.
@@ -126,7 +167,7 @@ export function AddServerModal({ open, onClose }: AddServerModalProps) {
       title={created ? 'Server registered' : 'Add a server'}
       description={
         created
-          ? 'Run the command below on the target machine. The API key is shown only once.'
+          ? 'Run the command below on the target machine. This window closes automatically when the agent connects.'
           : 'Register a machine, then install the agent using the generated command.'
       }
       footer={
@@ -157,6 +198,10 @@ export function AddServerModal({ open, onClose }: AddServerModalProps) {
     >
       {created ? (
         <div className="space-y-5">
+          <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs text-content">
+            Waiting for the agent… the dialog will close as soon as the first signal arrives.
+          </div>
+
           <div>
             <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-muted">
               <KeyRound className="h-3.5 w-3.5" />
