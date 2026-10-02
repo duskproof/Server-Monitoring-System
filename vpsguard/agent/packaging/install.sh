@@ -134,8 +134,22 @@ install_dependencies() {
     case "${PKG_MANAGER}" in
         apt)
             export DEBIAN_FRONTEND=noninteractive
-            apt-get update -qq
-            apt-get install -y -qq python3 python3-venv python3-pip ca-certificates >/dev/null
+            # Broken python3-apt / command-not-found hooks must not abort install.
+            if [[ -f /etc/apt/apt.conf.d/50command-not-found ]]; then
+                mv /etc/apt/apt.conf.d/50command-not-found \
+                    /etc/apt/apt.conf.d/50command-not-found.vpsguard-bak 2>/dev/null || true
+            fi
+            # Empty Post-Invoke-Success disables the broken cnf-update-db hook.
+            local apt_opts=(-o APT::Update::Post-Invoke-Success::=)
+            apt-get "${apt_opts[@]}" update -qq || true
+            if ! apt-get "${apt_opts[@]}" install -y -qq \
+                python3 python3-venv python3-pip ca-certificates >/dev/null; then
+                warn "apt install failed once — reinstalling python3-apt and retrying"
+                apt-get "${apt_opts[@]}" install --reinstall -y -qq python3-apt >/dev/null || true
+                apt-get "${apt_opts[@]}" install -y -qq \
+                    python3 python3-venv python3-pip ca-certificates >/dev/null \
+                    || die "Could not install python3 / pip via apt. Fix apt, then re-run this command."
+            fi
             ;;
         dnf)
             dnf install -y -q python3 python3-pip ca-certificates >/dev/null
