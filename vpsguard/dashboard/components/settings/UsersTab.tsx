@@ -103,9 +103,8 @@ export function UsersTab() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Users in your cabinet only
-          {currentUser?.organizationName ? ` (${currentUser.organizationName})` : ''}.{' '}
-          {users.length} account{users.length === 1 ? '' : 's'} — other cabinets stay separate.
+          Users in your cabinet only. {users.length} account
+          {users.length === 1 ? '' : 's'} — other cabinets stay separate.
         </p>
         <Button size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={() => openModal(null)}>
           Invite user

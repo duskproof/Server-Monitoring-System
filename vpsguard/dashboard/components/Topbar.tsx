@@ -112,12 +112,9 @@ export function Topbar() {
             </span>
             <span className="hidden text-left sm:block">
               <span className="block max-w-[10rem] truncate text-sm font-medium text-content">
-                {user?.organizationName || user?.name || user?.email || 'Cabinet'}
+                {user?.name || user?.email || 'Account'}
               </span>
-              <span className="block text-xs capitalize text-muted">
-                {user?.role ?? '—'}
-                {user?.organizationName ? ` · ${user.name || user.email}` : ''}
-              </span>
+              <span className="block text-xs capitalize text-muted">{user?.role ?? '—'}</span>
             </span>
             <ChevronDown className="hidden h-4 w-4 text-muted sm:block" />
           </button>
@@ -128,11 +125,6 @@ export function Topbar() {
               className="absolute right-0 top-[calc(100%+8px)] w-56 animate-fade-in overflow-hidden rounded-xl border border-line bg-surface shadow-xl"
             >
               <div className="border-b border-line px-4 py-3">
-                {user?.organizationName ? (
-                  <p className="truncate text-xs font-medium uppercase tracking-wide text-muted">
-                    {user.organizationName}
-                  </p>
-                ) : null}
                 <p className="truncate text-sm font-medium text-content">{user?.name || 'Account'}</p>
                 <p className="truncate text-xs text-muted">{user?.email}</p>
               </div>

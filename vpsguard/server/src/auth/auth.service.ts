@@ -75,8 +75,7 @@ export class AuthService implements OnModuleInit {
       );
     }
 
-    const cabinetName = (dto.name?.trim() || dto.email.split('@')[0] || 'Cabinet').slice(0, 160);
-    const org = await this.organizations.createCabinet(`${cabinetName} cabinet`, dto.email);
+    const org = await this.organizations.createCabinet('Cabinet', dto.email);
     const user = await this.users.save(
       this.users.create({
         email: dto.email.toLowerCase(),
