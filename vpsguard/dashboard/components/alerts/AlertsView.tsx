@@ -1,6 +1,6 @@
 'use client';
 
-import { BellOff, BellRing, Check, Pencil, Plus, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
+import { Check, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
@@ -32,9 +32,9 @@ import { useCanOperate } from '@/store/auth';
 type TabKey = 'firing' | 'acknowledged' | 'resolved';
 
 const TAB_ITEMS: TabItem<TabKey>[] = [
-  { key: 'firing', label: 'Active', icon: <BellRing className="h-4 w-4" /> },
-  { key: 'acknowledged', label: 'Acknowledged', icon: <Check className="h-4 w-4" /> },
-  { key: 'resolved', label: 'History', icon: <ShieldCheck className="h-4 w-4" /> },
+  { key: 'firing', label: 'Active' },
+  { key: 'acknowledged', label: 'Acknowledged' },
+  { key: 'resolved', label: 'History' },
 ];
 
 const SEVERITY_OPTIONS = [
@@ -133,7 +133,6 @@ export function AlertsView() {
           />
         ) : alerts.length === 0 ? (
           <EmptyState
-            icon={tab === 'firing' ? <ShieldCheck className="h-5 w-5" /> : <BellOff className="h-5 w-5" />}
             title={
               tab === 'firing'
                 ? 'No active alerts'
@@ -224,7 +223,6 @@ export function AlertsView() {
         <CardHeader
           title="Alert rules"
           description="Thresholds evaluated continuously against incoming metrics"
-          icon={<BellRing className="h-4 w-4" />}
           action={
             canOperate ? (
               <Button size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={() => openRuleModal(null)}>
@@ -245,7 +243,6 @@ export function AlertsView() {
         ) : (rulesQuery.data ?? []).length === 0 ? (
           <EmptyState
             className="m-4 border-dashed"
-            icon={<BellRing className="h-5 w-5" />}
             title="No alert rules yet"
             description="Create a rule to be notified when CPU, memory, disk, SSL or security metrics cross a threshold."
             action={

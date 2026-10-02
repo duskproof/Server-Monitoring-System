@@ -1,14 +1,10 @@
-import { Compass } from 'lucide-react';
 import Link from 'next/link';
 
 export default function NotFound() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center px-6">
       <div className="w-full max-w-md rounded-2xl border border-line bg-surface p-8 text-center">
-        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-          <Compass className="h-6 w-6" />
-        </span>
-        <h1 className="mt-4 text-lg font-semibold text-content">Page not found</h1>
+        <h1 className="text-lg font-semibold text-content">Page not found</h1>
         <p className="mt-2 text-sm text-muted">
           The page you are looking for does not exist or has been moved.
         </p>

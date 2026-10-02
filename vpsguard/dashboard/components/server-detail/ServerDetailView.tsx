@@ -2,21 +2,13 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  Activity,
   ArrowLeft,
-  Boxes,
   Clock,
   Cpu,
-  FileText,
   HardDrive,
-  ListTree,
   MemoryStick,
   Network,
-  Settings2,
-  ShieldCheck,
   Tag,
-  TerminalSquare,
-  Thermometer,
   Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -57,14 +49,14 @@ type TabKey =
   | 'terminal';
 
 const TAB_ITEMS: TabItem<TabKey>[] = [
-  { key: 'overview', label: 'Overview', icon: <Activity className="h-4 w-4" /> },
-  { key: 'processes', label: 'Processes', icon: <ListTree className="h-4 w-4" /> },
-  { key: 'docker', label: 'Docker', icon: <Boxes className="h-4 w-4" /> },
-  { key: 'logs', label: 'Logs', icon: <FileText className="h-4 w-4" /> },
-  { key: 'services', label: 'Services', icon: <Settings2 className="h-4 w-4" /> },
-  { key: 'temperatures', label: 'Temperatures', icon: <Thermometer className="h-4 w-4" /> },
-  { key: 'ssl', label: 'SSL', icon: <ShieldCheck className="h-4 w-4" /> },
-  { key: 'terminal', label: 'Terminal', icon: <TerminalSquare className="h-4 w-4" /> },
+  { key: 'overview', label: 'Overview' },
+  { key: 'processes', label: 'Processes' },
+  { key: 'docker', label: 'Docker' },
+  { key: 'logs', label: 'Logs' },
+  { key: 'services', label: 'Services' },
+  { key: 'temperatures', label: 'Temperatures' },
+  { key: 'ssl', label: 'SSL' },
+  { key: 'terminal', label: 'Terminal' },
 ];
 
 const TAB_KEYS = TAB_ITEMS.map((item) => item.key);

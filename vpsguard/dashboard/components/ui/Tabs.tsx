@@ -44,7 +44,6 @@ export function Tabs<T extends string>({
               value === item.key ? 'bg-primary text-primary-fg' : 'text-muted hover:bg-elevated hover:text-content',
             )}
           >
-            {item.icon}
             {item.label}
             {item.badge}
           </button>
@@ -69,7 +68,6 @@ export function Tabs<T extends string>({
               : 'border-transparent text-muted hover:border-line hover:text-content',
           )}
         >
-          {item.icon}
           {item.label}
           {item.badge}
         </button>

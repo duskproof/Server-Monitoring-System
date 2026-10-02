@@ -1,9 +1,9 @@
 'use client';
 
-import { BellRing, ChevronLeft, LayoutDashboard, Server, Settings, X } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect } from 'react';
 
 import { BrandMark } from '@/components/BrandMark';
 import { useAlerts } from '@/hooks/queries';
@@ -13,16 +13,15 @@ import { useUiStore } from '@/store/ui';
 interface NavItem {
   href: string;
   label: string;
-  icon: ReactNode;
   /** Exact match only — used for the overview root route. */
   exact?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/cabinet', label: 'Overview', icon: <LayoutDashboard className="h-[18px] w-[18px]" />, exact: true },
-  { href: '/cabinet/servers', label: 'Servers', icon: <Server className="h-[18px] w-[18px]" /> },
-  { href: '/cabinet/alerts', label: 'Alerts', icon: <BellRing className="h-[18px] w-[18px]" /> },
-  { href: '/cabinet/settings', label: 'Settings', icon: <Settings className="h-[18px] w-[18px]" /> },
+  { href: '/cabinet', label: 'Overview', exact: true },
+  { href: '/cabinet/servers', label: 'Servers' },
+  { href: '/cabinet/alerts', label: 'Alerts' },
+  { href: '/cabinet/settings', label: 'Settings' },
 ];
 
 export function Sidebar() {
@@ -35,7 +34,6 @@ export function Sidebar() {
   const { data: firingAlerts } = useAlerts('firing');
   const firingCount = firingAlerts?.length ?? 0;
 
-  // Close the mobile drawer whenever navigation occurs.
   useEffect(() => {
     setMobileNav(false);
   }, [pathname, setMobileNav]);
@@ -60,7 +58,11 @@ export function Sidebar() {
               collapsed && 'lg:justify-center lg:px-2',
             )}
           >
-            <span className="shrink-0">{item.icon}</span>
+            {collapsed ? (
+              <span className="hidden text-xs font-semibold uppercase tracking-wide lg:inline">
+                {item.label.slice(0, 1)}
+              </span>
+            ) : null}
             <span className={cn('flex-1 truncate', collapsed && 'lg:hidden')}>{item.label}</span>
             {item.href === '/cabinet/alerts' && firingCount > 0 ? (
               <span
@@ -80,7 +82,6 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop rail */}
       <aside
         className={cn(
           'hidden shrink-0 flex-col border-r border-line bg-surface transition-[width] duration-200 lg:flex',
@@ -104,7 +105,6 @@ export function Sidebar() {
         </button>
       </aside>
 
-      {/* Mobile drawer */}
       <div
         className={cn(
           'fixed inset-0 z-40 lg:hidden',

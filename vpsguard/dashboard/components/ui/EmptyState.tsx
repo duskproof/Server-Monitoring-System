@@ -10,7 +10,7 @@ export interface EmptyStateProps {
   className?: string;
 }
 
-export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
+export function EmptyState({ title, description, action, className }: EmptyStateProps) {
   return (
     <div
       className={cn(
@@ -18,9 +18,6 @@ export function EmptyState({ icon, title, description, action, className }: Empt
         className,
       )}
     >
-      {icon ? (
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-elevated text-muted">{icon}</span>
-      ) : null}
       <div>
         <p className="text-sm font-semibold text-content">{title}</p>
         {description ? <p className="mx-auto mt-1 max-w-md text-sm text-muted">{description}</p> : null}

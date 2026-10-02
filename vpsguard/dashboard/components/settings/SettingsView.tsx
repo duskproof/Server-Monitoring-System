@@ -1,6 +1,5 @@
 'use client';
 
-import { Plug, ScrollText, UserCog, Users, Layers } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { GroupsTab } from '@/components/settings/GroupsTab';
@@ -19,13 +18,13 @@ export function SettingsView() {
 
   const items = useMemo<TabItem<SettingsTab>[]>(() => {
     const tabs: TabItem<SettingsTab>[] = [
-      { key: 'profile', label: 'Profile', icon: <UserCog className="h-4 w-4" /> },
-      { key: 'groups', label: 'Groups', icon: <Layers className="h-4 w-4" /> },
-      { key: 'integrations', label: 'Integrations', icon: <Plug className="h-4 w-4" /> },
+      { key: 'profile', label: 'Profile' },
+      { key: 'groups', label: 'Groups' },
+      { key: 'integrations', label: 'Integrations' },
     ];
     if (isAdmin) {
-      tabs.splice(1, 0, { key: 'users', label: 'Users', icon: <Users className="h-4 w-4" /> });
-      tabs.push({ key: 'audit', label: 'Audit log', icon: <ScrollText className="h-4 w-4" /> });
+      tabs.splice(1, 0, { key: 'users', label: 'Users' });
+      tabs.push({ key: 'audit', label: 'Audit log' });
     }
     return tabs;
   }, [isAdmin]);

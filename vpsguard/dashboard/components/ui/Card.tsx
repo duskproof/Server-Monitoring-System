@@ -31,7 +31,6 @@ export function CardHeader({ title, description, action, icon, className, ...pro
       {...props}
     >
       <div className="flex min-w-0 items-start gap-3">
-        {icon ? <span className="mt-0.5 text-muted">{icon}</span> : null}
         <div className="min-w-0">
           <h2 className="truncate text-sm font-semibold text-content">{title}</h2>
           {description ? <p className="mt-0.5 text-xs text-muted">{description}</p> : null}
