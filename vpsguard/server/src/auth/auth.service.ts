@@ -86,7 +86,7 @@ export class AuthService implements OnModuleInit {
         organizationId: org.id,
       }),
     );
-    await this.alerts.seedDefaultRules(org.id);
+    // Empty cabinet: no default alert rules until the owner adds servers / creates them.
     return this.issueTokens(user);
   }
 
