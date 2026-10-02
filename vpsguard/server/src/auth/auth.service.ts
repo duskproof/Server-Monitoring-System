@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   Logger,
   OnModuleInit,
@@ -53,14 +54,25 @@ export class AuthService implements OnModuleInit {
     const existing = await this.users.findOne({ where: { email: dto.email.toLowerCase() } });
     if (existing) throw new ConflictException('Email is already registered');
 
-    // The very first account always becomes an admin; later ones default to viewer.
-    const isFirstUser = (await this.users.count()) === 0;
+    const userCount = await this.users.count();
+    // After the bootstrap admin exists, public self-signup is viewer-only and can be disabled.
+    if (userCount > 0) {
+      const allowPublic =
+        (process.env.ALLOW_PUBLIC_REGISTRATION ?? 'true').toLowerCase() !== 'false';
+      if (!allowPublic) {
+        throw new ForbiddenException(
+          'Public registration is disabled. Ask an admin to create your account.',
+        );
+      }
+    }
+
+    // Never trust a client-supplied role. First user (empty DB) is admin; everyone else is viewer.
     const user = await this.users.save(
       this.users.create({
         email: dto.email.toLowerCase(),
         passwordHash: await bcrypt.hash(dto.password, BCRYPT_ROUNDS),
         name: dto.name ?? null,
-        role: isFirstUser ? UserRole.ADMIN : (dto.role ?? UserRole.VIEWER),
+        role: userCount === 0 ? UserRole.ADMIN : UserRole.VIEWER,
       }),
     );
     return this.issueTokens(user);
