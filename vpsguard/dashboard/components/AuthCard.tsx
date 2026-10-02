@@ -16,7 +16,7 @@ export function AuthShell({
     <main className="flex min-h-[100dvh] flex-col lg:flex-row">
       <section className="relative hidden flex-1 flex-col justify-between overflow-hidden bg-gradient-to-br from-[#0b1220] via-[#0f2544] to-[#0b1220] p-10 text-slate-100 lg:flex">
         <div>
-          <span className="text-lg font-semibold tracking-tight">DuskProof guard</span>
+          <span className="text-lg font-semibold tracking-tight">DuskProof Guard</span>
         </div>
 
         <div className="max-w-md">
@@ -43,13 +43,13 @@ export function AuthShell({
           </ul>
         </div>
 
-        <p className="text-xs text-slate-400">© {new Date().getFullYear()} DuskProof guard</p>
+        <p className="text-xs text-slate-400">© {new Date().getFullYear()} DuskProof Guard</p>
       </section>
 
       <section className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
-            <span className="text-lg font-semibold tracking-tight text-content">DuskProof guard</span>
+            <span className="text-lg font-semibold tracking-tight text-content">DuskProof Guard</span>
           </div>
 
           <h1 className="text-2xl font-semibold text-content">{title}</h1>

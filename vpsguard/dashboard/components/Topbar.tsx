@@ -44,7 +44,7 @@ export function Topbar() {
     return () => document.removeEventListener('mousedown', onClick);
   }, [menuOpen]);
 
-  const title = TITLES.find((entry) => entry.match(pathname))?.title ?? 'DuskProof guard';
+  const title = TITLES.find((entry) => entry.match(pathname))?.title ?? 'DuskProof Guard';
 
   const onLogout = () => {
     logout();

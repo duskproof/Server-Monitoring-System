@@ -86,7 +86,7 @@ export function Sidebar() {
       >
         <div className={cn('flex h-16 items-center border-b border-line px-4', collapsed && 'justify-center px-2')}>
           {!collapsed ? (
-            <span className="text-base font-semibold tracking-tight text-content">DuskProof guard</span>
+            <span className="text-base font-semibold tracking-tight text-content">DuskProof Guard</span>
           ) : (
             <span className="text-sm font-semibold tracking-tight text-content">DP</span>
           )}
@@ -128,7 +128,7 @@ export function Sidebar() {
         >
           <div className="flex h-16 items-center justify-between border-b border-line px-4">
             <div className="flex items-center gap-2.5">
-              <span className="text-base font-semibold tracking-tight text-content">DuskProof guard</span>
+              <span className="text-base font-semibold tracking-tight text-content">DuskProof Guard</span>
             </div>
             <button
               type="button"

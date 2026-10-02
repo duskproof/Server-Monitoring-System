@@ -6,11 +6,11 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'DuskProof guard',
-    template: '%s · DuskProof guard',
+    default: 'DuskProof Guard',
+    template: '%s · DuskProof Guard',
   },
   description: 'Real-time monitoring, alerting and remote control for your VPS/VDS fleet.',
-  applicationName: 'DuskProof guard',
+  applicationName: 'DuskProof Guard',
   manifest: '/manifest.json',
   icons: {
     icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: 'DuskProof guard',
+    title: 'DuskProof Guard',
     statusBarStyle: 'black-translucent',
   },
   formatDetection: {
