@@ -359,9 +359,10 @@ export function ServersView() {
 
       <DeleteServerDialog
         open={pendingDelete !== null}
+        serverId={pendingDelete?.id ?? ''}
         serverName={pendingDelete?.name ?? ''}
         loading={deleteServer.isPending}
-        onConfirm={confirmDelete}
+        onForceRemove={confirmDelete}
         onCancel={() => setPendingDelete(null)}
       />
     </div>

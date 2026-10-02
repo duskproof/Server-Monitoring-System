@@ -477,6 +477,9 @@ do_uninstall() {
     fi
     info "Uninstalling the VPSGuard agent"
 
+    # Tell the control plane this is an intentional uninstall (not AFK / maintenance).
+    notify_server_unregister || true
+
     if command -v systemctl >/dev/null 2>&1; then
         systemctl stop "${SERVICE_NAME}" 2>/dev/null || true
         systemctl disable "${SERVICE_NAME}" 2>/dev/null || true
@@ -498,6 +501,34 @@ do_uninstall() {
         ok "Kept ${CONFIG_DIR}, ${STATE_DIR} and ${LOG_DIR} (use --purge to remove them)"
     fi
     printf '\n%sVPSGuard agent uninstalled.%s\n\n' "${C_GREEN}" "${C_RESET}"
+}
+
+# Reads url + api_key from the installed config and POSTs /api/v1/agent/unregister.
+notify_server_unregister() {
+    if [ ! -f "${CONFIG_FILE}" ]; then
+        warn "No ${CONFIG_FILE} — skipping uninstall handshake with the control plane"
+        return 0
+    fi
+    local url key
+    url="$(awk -F'=' '/^[[:space:]]*url[[:space:]]*=/ { gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2; exit }' "${CONFIG_FILE}")"
+    key="$(awk -F'=' '/^[[:space:]]*api_key[[:space:]]*=/ { gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2; exit }' "${CONFIG_FILE}")"
+    url="${url%\"}"; url="${url#\"}"
+    key="${key%\"}"; key="${key#\"}"
+    if [ -z "${url}" ] || [ -z "${key}" ]; then
+        warn "Config missing url/api_key — skipping uninstall handshake"
+        return 0
+    fi
+    url="${url%/}"
+    info "Notifying control plane of uninstall (${url})"
+    if curl -fsS -X POST "${url}/api/v1/agent/unregister" \
+        -H "X-API-Key: ${key}" \
+        -H "Content-Type: application/json" \
+        -d '{}' >/dev/null; then
+        ok "Control plane acknowledged uninstall"
+    else
+        warn "Could not reach control plane to confirm uninstall (offline AFK is fine — remove the server in the UI if needed)"
+        return 1
+    fi
 }
 
 main() {

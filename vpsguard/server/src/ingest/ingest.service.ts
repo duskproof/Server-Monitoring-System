@@ -67,6 +67,15 @@ export class IngestService {
     return { status: 'ok', server_id: server.id, commands: pending };
   }
 
+  async unregister(server: MonitoredServer): Promise<{ ok: boolean }> {
+    const serverId = server.id;
+    const name = server.name;
+    await this.servers.delete({ id: serverId });
+    this.realtime.emitServerRemoved(serverId, 'uninstalled');
+    this.logger.log(`Server ${name} (${serverId}) unregistered by agent uninstall`);
+    return { ok: true };
+  }
+
   /** Flattens the payload into the small snapshot rendered in list views. */
   private buildSnapshot(metrics: Record<string, any>): Record<string, any> {
     const disks: any[] = Array.isArray(metrics.disk) ? metrics.disk : [];

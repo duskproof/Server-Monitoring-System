@@ -104,6 +104,11 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.server?.emit('server:status', { serverId, status });
   }
 
+  /** Fired when a server row is gone (agent uninstall handshake or operator delete). */
+  emitServerRemoved(serverId: string, reason: 'uninstalled' | 'deleted'): void {
+    this.server?.emit('server:removed', { serverId, reason });
+  }
+
   emitOverview(organizationId: string, overview: unknown): void {
     this.server?.to(`overview:${organizationId}`).emit('overview', overview);
   }

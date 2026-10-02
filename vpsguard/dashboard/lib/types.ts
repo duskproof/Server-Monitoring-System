@@ -365,6 +365,11 @@ export interface ServerStatusPayload {
   status: ServerStatus;
 }
 
+export interface ServerRemovedPayload {
+  serverId: string;
+  reason?: 'uninstalled' | 'deleted';
+}
+
 export interface AlertPayload {
   alert: Alert;
 }

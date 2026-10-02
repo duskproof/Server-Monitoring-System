@@ -28,6 +28,17 @@ export class IngestController {
   @Public()
   @UseGuards(ApiKeyGuard)
   @SkipThrottle()
+  @Post('agent/unregister')
+  @ApiOperation({
+    summary: 'Agent uninstall handshake — removes the server (not the same as going offline)',
+  })
+  unregister(@Req() request: any) {
+    return this.ingest.unregister(request.agentServer);
+  }
+
+  @Public()
+  @UseGuards(ApiKeyGuard)
+  @SkipThrottle()
   @Post('agent/commands/:id/result')
   @ApiOperation({ summary: 'Report the result of a remote command' })
   reportResult(

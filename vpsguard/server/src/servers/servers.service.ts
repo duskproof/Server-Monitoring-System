@@ -171,6 +171,12 @@ export class ServersService {
     if (!result.affected) throw new NotFoundException('Server not found');
   }
 
+  /** Agent-initiated removal (API key auth) — no organization claim required. */
+  async removeById(id: string): Promise<boolean> {
+    const result = await this.servers.delete({ id });
+    return Boolean(result.affected);
+  }
+
   async rotateApiKey(organizationId: string, id: string) {
     const server = await this.findEntity(id, organizationId);
     const apiKey = `vg_${randomBytes(24).toString('hex')}`;

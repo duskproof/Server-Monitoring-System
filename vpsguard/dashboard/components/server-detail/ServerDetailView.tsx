@@ -260,14 +260,19 @@ export function ServerDetailView({ serverId }: { serverId: string }) {
 
       <DeleteServerDialog
         open={confirmDelete}
+        serverId={server.id}
         serverName={server.name}
         loading={deleteServer.isPending}
-        onConfirm={async () => {
+        onForceRemove={async () => {
           await deleteServer.mutateAsync(server.id).catch(() => undefined);
           setConfirmDelete(false);
           router.push('/cabinet/servers');
         }}
         onCancel={() => setConfirmDelete(false)}
+        onRemoved={() => {
+          setConfirmDelete(false);
+          router.push('/cabinet/servers');
+        }}
       />
     </div>
   );
