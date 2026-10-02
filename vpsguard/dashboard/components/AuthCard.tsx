@@ -49,7 +49,7 @@ export function AuthShell({
       <section className="flex flex-1 items-center justify-center bg-bg px-5 py-10 sm:px-8">
         <div className="w-full max-w-sm">
           <div className="mb-8 lg:hidden">
-            <BrandMark guardClassName="text-content dark:text-white" />
+            <BrandMark className="text-content dark:text-white" />
           </div>
 
           <h1 className="text-2xl font-semibold text-content">{title}</h1>

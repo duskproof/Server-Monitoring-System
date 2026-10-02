@@ -55,7 +55,7 @@ export function AuditTab() {
       {logsQuery.isLoading ? (
         <SkeletonTable rows={8} />
       ) : rows.length === 0 ? (
-        <EmptyState title="No audit entries" description="Privileged actions in this cabinet will appear here." />
+        <EmptyState title="No audit entries" description="Privileged actions in this workspace will appear here." />
       ) : (
         <TableWrapper>
           <Table>

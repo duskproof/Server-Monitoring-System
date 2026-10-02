@@ -24,9 +24,9 @@ const ROLE_TONE: Record<Role, BadgeTone> = {
 };
 
 const ROLE_OPTIONS = [
-  { value: 'viewer', label: 'Viewer — read-only in this cabinet' },
+  { value: 'viewer', label: 'Viewer — read-only in this workspace' },
   { value: 'operator', label: 'Operator — can run commands' },
-  { value: 'admin', label: 'Admin — full control of this cabinet' },
+  { value: 'admin', label: 'Admin — full control of this workspace' },
 ];
 
 const EMPTY_FORM: UserInput = { name: '', email: '', role: 'viewer', password: '' };
@@ -103,8 +103,8 @@ export function UsersTab() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
-          Users in your cabinet only. {users.length} account
-          {users.length === 1 ? '' : 's'} — other cabinets stay separate.
+          Users in your workspace only. {users.length} account
+          {users.length === 1 ? '' : 's'} — other workspaces stay separate.
         </p>
         <Button size="sm" leftIcon={<Plus className="h-4 w-4" />} onClick={() => openModal(null)}>
           Invite user
@@ -115,7 +115,7 @@ export function UsersTab() {
         <EmptyState
           icon={<Users className="h-5 w-5" />}
           title="No users yet"
-          description="Add teammates to this cabinet and assign viewer, operator, or admin roles."
+          description="Add teammates to this workspace and assign viewer, operator, or admin roles."
         />
       ) : (
         <TableWrapper>

@@ -42,7 +42,7 @@ export function RegisterForm() {
     setSubmitting(true);
     try {
       await register({ email: email.trim(), password });
-      toast.success('Cabinet created — you are its admin');
+      toast.success('Workspace created — you are its admin');
       router.replace('/cabinet');
       router.refresh();
     } catch (error) {
@@ -95,7 +95,7 @@ export function RegisterForm() {
         loading={submitting}
         leftIcon={<UserPlus className="h-4 w-4" />}
       >
-        Create cabinet
+        Create workspace
       </Button>
     </form>
   );

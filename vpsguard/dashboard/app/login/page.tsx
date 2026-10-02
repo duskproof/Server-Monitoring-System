@@ -14,12 +14,12 @@ export default function LoginPage() {
   return (
     <AuthShell
       title="Sign in"
-      subtitle="Access your cabinet and monitored servers."
+      subtitle="Access your workspace and monitored servers."
       footer={
         <>
           Need your own workspace?{' '}
           <Link href="/register" className="font-medium text-primary hover:underline">
-            Create a cabinet
+            Create one
           </Link>
         </>
       }

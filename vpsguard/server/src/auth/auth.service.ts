@@ -75,7 +75,7 @@ export class AuthService implements OnModuleInit {
       );
     }
 
-    const org = await this.organizations.createCabinet('Cabinet', dto.email);
+    const org = await this.organizations.createCabinet('Workspace', dto.email);
     const user = await this.users.save(
       this.users.create({
         email: dto.email.toLowerCase(),
