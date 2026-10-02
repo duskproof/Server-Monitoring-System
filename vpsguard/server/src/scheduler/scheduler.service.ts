@@ -45,7 +45,7 @@ export class SchedulerService {
       this.realtime.emitServerStatus(server.id, ServerStatus.OFFLINE);
 
       for (const rule of offlineRules) {
-        if (rule.organizationId && server.organizationId && rule.organizationId !== server.organizationId) {
+        if (!rule.organizationId || !server.organizationId || rule.organizationId !== server.organizationId) {
           continue;
         }
         if (rule.serverId && rule.serverId !== server.id) continue;
@@ -107,7 +107,7 @@ export class SchedulerService {
       if (days > DISK_FORECAST_WARNING_DAYS) continue;
 
       for (const rule of forecastRules) {
-        if (rule.organizationId && server.organizationId && rule.organizationId !== server.organizationId) {
+        if (!rule.organizationId || !server.organizationId || rule.organizationId !== server.organizationId) {
           continue;
         }
         if (rule.serverId && rule.serverId !== server.id) continue;

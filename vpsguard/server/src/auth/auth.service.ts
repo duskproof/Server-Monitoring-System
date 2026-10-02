@@ -39,17 +39,16 @@ export class AuthService implements OnModuleInit {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly organizations: OrganizationsService,
-    private readonly alerts: AlertsService,
   ) {}
 
-  /** Bootstraps a default admin + cabinet so a fresh deployment is immediately usable. */
+  /** Bootstraps a default admin + empty workspace so a fresh deployment is usable. */
   async onModuleInit(): Promise<void> {
     const count = await this.users.count();
     if (count > 0) return;
 
     const email = process.env.ADMIN_EMAIL ?? 'admin@vpsguard.local';
     const password = process.env.ADMIN_PASSWORD ?? 'ChangeMe123!';
-    const org = await this.organizations.createCabinet('Platform cabinet', email);
+    const org = await this.organizations.createCabinet('Platform workspace', email);
     await this.users.save(
       this.users.create({
         email,
@@ -59,8 +58,9 @@ export class AuthService implements OnModuleInit {
         organizationId: org.id,
       }),
     );
-    await this.alerts.seedDefaultRules(org.id);
-    this.logger.warn(`Bootstrapped default admin "${email}" in cabinet ${org.id}. Change the password now.`);
+    this.logger.warn(
+      `Bootstrapped default admin "${email}" in workspace ${org.id} (no default alert rules).`,
+    );
   }
 
   async register(dto: RegisterDto): Promise<TokenPair> {

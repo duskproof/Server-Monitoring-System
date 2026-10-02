@@ -51,7 +51,7 @@ export class AlertEngineService {
     const rules = await this.getRules();
 
     for (const rule of rules) {
-      if (rule.organizationId && server.organizationId && rule.organizationId !== server.organizationId) {
+      if (!rule.organizationId || !server.organizationId || rule.organizationId !== server.organizationId) {
         continue;
       }
       if (rule.serverId && rule.serverId !== server.id) continue;

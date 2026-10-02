@@ -1,24 +1,56 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import {
   Alert,
-  AlertCondition,
   AlertRule,
-  AlertSeverity,
   AlertStatus,
   MonitoredServer,
 } from '../database/entities';
 import { AlertEngineService } from './alert-engine.service';
 import { CreateAlertRuleDto, UpdateAlertRuleDto } from './dto';
 
+/** Names previously auto-injected on register/bootstrap — never seed these again. */
+const LEGACY_AUTO_SEED_RULE_NAMES = [
+  'High CPU usage',
+  'High memory usage',
+  'Low disk space',
+  'Agent offline',
+  'SSL certificate expiring',
+  'Disk projected to fill within 3 days',
+  'CPU temperature high',
+  'Failed SSH attempts spike',
+];
+
 @Injectable()
-export class AlertsService {
+export class AlertsService implements OnModuleInit {
+  private readonly logger = new Logger(AlertsService.name);
+
   constructor(
     @InjectRepository(Alert) private readonly alerts: Repository<Alert>,
     @InjectRepository(AlertRule) private readonly rules: Repository<AlertRule>,
     private readonly engine: AlertEngineService,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.purgeLegacyAutoSeededRules();
+  }
+
+  /**
+   * Removes the old “default 8 rules” that were auto-created for every cabinet.
+   * Workspaces stay empty until the owner creates their own rules.
+   */
+  private async purgeLegacyAutoSeededRules(): Promise<void> {
+    const result = await this.rules.delete({
+      name: In(LEGACY_AUTO_SEED_RULE_NAMES),
+    });
+    const orphans = await this.rules.delete({ organizationId: IsNull() });
+    const removed = (result.affected ?? 0) + (orphans.affected ?? 0);
+    if (removed > 0) {
+      this.engine.invalidateRulesCache();
+      this.logger.warn(`Removed ${removed} legacy auto-seeded / orphan alert rule(s)`);
+    }
+  }
 
   async listAlerts(organizationId: string, status?: AlertStatus, serverId?: string, limit = 200) {
     const qb = this.alerts
@@ -92,94 +124,5 @@ export class AlertsService {
     if (!result.affected) throw new NotFoundException('Alert rule not found');
     this.engine.invalidateRulesCache();
     this.engine.forget((key) => key.startsWith(`${id}:`));
-  }
-
-  /** Seeds baseline hardware / anomaly rules for one cabinet (idempotent by name+org). */
-  async seedDefaultRules(organizationId: string): Promise<void> {
-    const defaults = [
-      {
-        name: 'High CPU usage',
-        metric: 'cpu.percent',
-        condition: AlertCondition.GT,
-        threshold: 90,
-        durationSeconds: 300,
-        severity: AlertSeverity.CRITICAL,
-        channels: ['telegram'],
-      },
-      {
-        name: 'High memory usage',
-        metric: 'memory.used_percent',
-        condition: AlertCondition.GT,
-        threshold: 90,
-        durationSeconds: 300,
-        severity: AlertSeverity.WARNING,
-        channels: ['telegram'],
-      },
-      {
-        name: 'Low disk space',
-        metric: 'disk.used_percent',
-        condition: AlertCondition.GT,
-        threshold: 85,
-        durationSeconds: 600,
-        severity: AlertSeverity.WARNING,
-        channels: ['telegram'],
-      },
-      {
-        name: 'Agent offline',
-        metric: 'agent.offline',
-        condition: AlertCondition.EQ,
-        threshold: 1,
-        durationSeconds: 0,
-        severity: AlertSeverity.CRITICAL,
-        channels: ['telegram'],
-      },
-      {
-        name: 'SSL certificate expiring',
-        metric: 'ssl.days_left',
-        condition: AlertCondition.LT,
-        threshold: 14,
-        durationSeconds: 0,
-        severity: AlertSeverity.WARNING,
-        channels: ['telegram'],
-      },
-      {
-        name: 'Disk projected to fill within 3 days',
-        metric: 'disk.forecast_days',
-        condition: AlertCondition.LT,
-        threshold: 3,
-        durationSeconds: 0,
-        severity: AlertSeverity.WARNING,
-        channels: ['telegram'],
-      },
-      {
-        name: 'CPU temperature high',
-        metric: 'cpu.temperature',
-        condition: AlertCondition.GT,
-        threshold: 80,
-        durationSeconds: 60,
-        severity: AlertSeverity.WARNING,
-        channels: ['telegram'],
-      },
-      {
-        name: 'Failed SSH attempts spike',
-        metric: 'security.failed_ssh_attempts',
-        condition: AlertCondition.GT,
-        threshold: 20,
-        durationSeconds: 300,
-        severity: AlertSeverity.CRITICAL,
-        channels: ['telegram'],
-      },
-    ];
-
-    let created = 0;
-    for (const rule of defaults) {
-      const existing = await this.rules.findOne({
-        where: { name: rule.name, organizationId },
-      });
-      if (existing) continue;
-      await this.rules.save(this.rules.create({ ...rule, organizationId }));
-      created += 1;
-    }
-    if (created > 0) this.engine.invalidateRulesCache();
   }
 }
