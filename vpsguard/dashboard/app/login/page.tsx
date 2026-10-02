@@ -19,7 +19,7 @@ export default function LoginPage() {
         <>
           Need your own workspace?{' '}
           <Link href="/register" className="font-medium text-primary hover:underline">
-            Create one
+            Create your workspace
           </Link>
         </>
       }
