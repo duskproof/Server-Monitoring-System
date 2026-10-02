@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AuditLog } from '../database/entities';
+import { AuditLog, User } from '../database/entities';
 
 @Injectable()
 export class AuditService {
-  constructor(@InjectRepository(AuditLog) private readonly logs: Repository<AuditLog>) {}
+  constructor(
+    @InjectRepository(AuditLog) private readonly logs: Repository<AuditLog>,
+    @InjectRepository(User) private readonly users: Repository<User>,
+  ) {}
 
   async record(
     userId: string | null,
@@ -19,12 +22,16 @@ export class AuditService {
     );
   }
 
-  async list(limit = 200, offset = 0) {
-    const [items, total] = await this.logs.findAndCount({
-      order: { createdAt: 'DESC' },
-      take: Math.min(limit, 500),
-      skip: offset,
-    });
+  async list(organizationId: string, limit = 200, offset = 0) {
+    const qb = this.logs
+      .createQueryBuilder('log')
+      .innerJoin(User, 'user', 'user.id = log.user_id')
+      .where('user.organization_id = :organizationId', { organizationId })
+      .orderBy('log.created_at', 'DESC')
+      .take(Math.min(limit, 500))
+      .skip(offset);
+
+    const [items, total] = await qb.getManyAndCount();
     return { items, total };
   }
 }

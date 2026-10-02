@@ -5,17 +5,17 @@ import { AuthShell } from '@/components/AuthCard';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 
 export const metadata: Metadata = {
-  title: 'Create account',
+  title: 'Create cabinet',
 };
 
 export default function RegisterPage() {
   return (
     <AuthShell
-      title="Create your account"
-      subtitle="Start monitoring your fleet in a couple of minutes."
+      title="Create your cabinet"
+      subtitle="Open a private workspace for your servers. Other cabinets stay invisible."
       footer={
         <>
-          Already registered?{' '}
+          Already have a cabinet?{' '}
           <Link href="/login" className="font-medium text-primary hover:underline">
             Sign in
           </Link>

@@ -1,11 +1,19 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Organization } from './organization.entity';
 
 @Entity('groups')
 export class Group {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Index({ unique: true })
   @Column({ type: 'varchar', length: 120 })
   name: string;
 
@@ -14,6 +22,14 @@ export class Group {
 
   @Column({ type: 'varchar', length: 20, default: '#3b82f6' })
   color: string;
+
+  @Index()
+  @Column({ name: 'organization_id', type: 'uuid', nullable: true })
+  organizationId: string | null;
+
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'organization_id' })
+  organization: Organization | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

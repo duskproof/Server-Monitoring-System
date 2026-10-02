@@ -5,7 +5,8 @@ import { IsEnum, IsInt, IsObject, IsOptional, IsUUID } from 'class-validator';
 import { AuditModule } from '../audit/audit.module';
 import { AuditService } from '../audit/audit.service';
 import { AuthenticatedUser, CurrentUser, Roles } from '../common/decorators';
-import { Command, CommandType, UserRole } from '../database/entities';
+import { requireOrganizationId } from '../common/tenant';
+import { Command, CommandType, MonitoredServer, UserRole } from '../database/entities';
 import { CommandsService } from './commands.service';
 
 class CreateCommandDto {
@@ -42,6 +43,7 @@ export class CommandsController {
   @ApiOperation({ summary: 'Queue a command for an agent' })
   async create(@Body() dto: CreateCommandDto, @CurrentUser() user: AuthenticatedUser) {
     const command = await this.commands.create(
+      requireOrganizationId(user),
       dto.serverId,
       dto.type,
       dto.args ?? {},
@@ -57,14 +59,22 @@ export class CommandsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Command execution history' })
-  history(@Query('serverId') serverId?: string, @Query('limit') limit?: string) {
-    return this.commands.history(serverId, limit ? Number.parseInt(limit, 10) : 100);
+  @ApiOperation({ summary: 'Command execution history for your cabinet' })
+  history(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('serverId') serverId?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.commands.history(
+      requireOrganizationId(user),
+      serverId,
+      limit ? Number.parseInt(limit, 10) : 100,
+    );
   }
 }
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Command]), AuditModule],
+  imports: [TypeOrmModule.forFeature([Command, MonitoredServer]), AuditModule],
   controllers: [CommandsController],
   providers: [CommandsService],
   exports: [CommandsService],

@@ -11,7 +11,8 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Roles } from '../common/decorators';
+import { AuthenticatedUser, CurrentUser, Roles } from '../common/decorators';
+import { requireOrganizationId } from '../common/tenant';
 import { Integration, IntegrationType, UserRole } from '../database/entities';
 import { NotificationsService } from './notifications.service';
 
@@ -25,10 +26,13 @@ export class IntegrationsController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'List notification integrations' })
-  async list() {
-    const rows = await this.integrations.find({ order: { type: 'ASC' } });
-    // Secrets are masked so the dashboard never receives raw tokens.
+  @ApiOperation({ summary: 'List notification integrations in your cabinet' })
+  async list(@CurrentUser() user: AuthenticatedUser) {
+    const organizationId = requireOrganizationId(user);
+    const rows = await this.integrations.find({
+      where: { organizationId },
+      order: { type: 'ASC' },
+    });
     return rows.map((row) => ({
       ...row,
       config: Object.fromEntries(
@@ -45,12 +49,18 @@ export class IntegrationsController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Create or update an integration' })
   async upsert(
-    @Body() body: { type: IntegrationType; name: string; enabled?: boolean; config: Record<string, any> },
+    @CurrentUser() user: AuthenticatedUser,
+    @Body()
+    body: { type: IntegrationType; name: string; enabled?: boolean; config: Record<string, any> },
   ) {
-    const existing = await this.integrations.findOne({ where: { type: body.type } });
-    const entity = existing ?? this.integrations.create({ type: body.type });
+    const organizationId = requireOrganizationId(user);
+    const existing = await this.integrations.findOne({
+      where: { type: body.type, organizationId },
+    });
+    const entity = existing ?? this.integrations.create({ type: body.type, organizationId });
     entity.name = body.name ?? body.type;
     entity.enabled = body.enabled ?? true;
+    entity.organizationId = organizationId;
     entity.config = { ...(existing?.config ?? {}), ...body.config };
     return this.integrations.save(entity);
   }
@@ -58,15 +68,15 @@ export class IntegrationsController {
   @Post('test/:channel')
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
   @ApiOperation({ summary: 'Send a test notification through a channel' })
-  test(@Param('channel') channel: string) {
-    return this.notifications.sendTest(channel);
+  test(@Param('channel') channel: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.notifications.sendTest(channel, requireOrganizationId(user));
   }
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Delete an integration' })
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
-    await this.integrations.delete({ id });
+  async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
+    await this.integrations.delete({ id, organizationId: requireOrganizationId(user) });
     return { ok: true };
   }
 }

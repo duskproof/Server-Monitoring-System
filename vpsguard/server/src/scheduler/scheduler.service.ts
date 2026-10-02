@@ -45,6 +45,9 @@ export class SchedulerService {
       this.realtime.emitServerStatus(server.id, ServerStatus.OFFLINE);
 
       for (const rule of offlineRules) {
+        if (rule.organizationId && server.organizationId && rule.organizationId !== server.organizationId) {
+          continue;
+        }
         if (rule.serverId && rule.serverId !== server.id) continue;
         if (rule.groupId && rule.groupId !== server.groupId) continue;
         await this.alertEngine.fire(rule, server, 1);
@@ -52,11 +55,22 @@ export class SchedulerService {
     }
   }
 
-  /** Broadcasts fleet counters to dashboards subscribed to the overview room. */
+  /** Broadcasts per-cabinet counters to dashboards subscribed to their overview room. */
   @Cron(CronExpression.EVERY_10_SECONDS)
   async pushOverview(): Promise<void> {
     try {
-      this.realtime.emitOverview(await this.servers.overview());
+      const orgIds = await this.serversRepo
+        .createQueryBuilder('server')
+        .select('DISTINCT server.organization_id', 'organizationId')
+        .where('server.organization_id IS NOT NULL')
+        .getRawMany<{ organizationId: string }>();
+      for (const row of orgIds) {
+        if (!row.organizationId) continue;
+        this.realtime.emitOverview(
+          row.organizationId,
+          await this.servers.overview(row.organizationId),
+        );
+      }
     } catch (error) {
       this.logger.debug(`Overview broadcast skipped: ${(error as Error).message}`);
     }
@@ -93,6 +107,9 @@ export class SchedulerService {
       if (days > DISK_FORECAST_WARNING_DAYS) continue;
 
       for (const rule of forecastRules) {
+        if (rule.organizationId && server.organizationId && rule.organizationId !== server.organizationId) {
+          continue;
+        }
         if (rule.serverId && rule.serverId !== server.id) continue;
         if (rule.groupId && rule.groupId !== server.groupId) continue;
         await this.alertEngine.fire(rule, server, Number(days.toFixed(2)));

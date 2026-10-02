@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import type { ReactNode } from 'react';
 
 /** Shared split-screen shell for the login and register screens. */
@@ -16,9 +15,8 @@ export function AuthShell({
   return (
     <main className="flex min-h-[100dvh] flex-col lg:flex-row">
       <section className="relative hidden flex-1 flex-col justify-between overflow-hidden bg-gradient-to-br from-[#0b1220] via-[#0f2544] to-[#0b1220] p-10 text-slate-100 lg:flex">
-        <div className="flex items-center gap-3">
-          <Image src="/icon.svg" alt="" width={40} height={40} priority />
-          <span className="text-lg font-semibold tracking-tight">VPSGuard</span>
+        <div>
+          <span className="text-lg font-semibold tracking-tight">DuskProof guard</span>
         </div>
 
         <div className="max-w-md">
@@ -45,14 +43,13 @@ export function AuthShell({
           </ul>
         </div>
 
-        <p className="text-xs text-slate-400">© {new Date().getFullYear()} VPSGuard</p>
+        <p className="text-xs text-slate-400">© {new Date().getFullYear()} DuskProof guard</p>
       </section>
 
       <section className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
         <div className="w-full max-w-sm">
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <Image src="/icon.svg" alt="" width={36} height={36} priority />
-            <span className="text-lg font-semibold tracking-tight text-content">VPSGuard</span>
+          <div className="mb-8 lg:hidden">
+            <span className="text-lg font-semibold tracking-tight text-content">DuskProof guard</span>
           </div>
 
           <h1 className="text-2xl font-semibold text-content">{title}</h1>

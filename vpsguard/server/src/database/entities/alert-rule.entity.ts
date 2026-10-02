@@ -3,9 +3,12 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Organization } from './organization.entity';
 
 export enum AlertSeverity {
   INFO = 'info',
@@ -28,7 +31,15 @@ export class AlertRule {
   @Column({ type: 'varchar', length: 160 })
   name: string;
 
-  /** Null server + null group means the rule applies to every server. */
+  @Index()
+  @Column({ name: 'organization_id', type: 'uuid', nullable: true })
+  organizationId: string | null;
+
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'organization_id' })
+  organization: Organization | null;
+
+  /** Null server + null group means the rule applies to every server in the org. */
   @Index()
   @Column({ name: 'server_id', type: 'uuid', nullable: true })
   serverId: string | null;

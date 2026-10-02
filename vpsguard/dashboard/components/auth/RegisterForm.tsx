@@ -1,6 +1,6 @@
 'use client';
 
-import { Lock, Mail, UserPlus, User as UserIcon } from 'lucide-react';
+import { Lock, Mail, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import toast from 'react-hot-toast';
@@ -11,7 +11,6 @@ import { errorMessage } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 
 interface FieldErrors {
-  name?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -21,7 +20,6 @@ export function RegisterForm() {
   const router = useRouter();
   const register = useAuthStore((state) => state.register);
 
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -30,7 +28,6 @@ export function RegisterForm() {
 
   const validate = (): boolean => {
     const next: FieldErrors = {};
-    if (name.trim().length < 2) next.name = 'Enter your full name';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = 'Enter a valid e-mail address';
     if (password.length < 8) next.password = 'Password must be at least 8 characters';
     if (password !== confirmPassword) next.confirmPassword = 'Passwords do not match';
@@ -44,8 +41,8 @@ export function RegisterForm() {
 
     setSubmitting(true);
     try {
-      await register({ name: name.trim(), email: email.trim(), password });
-      toast.success('Account created — welcome to VPSGuard');
+      await register({ email: email.trim(), password });
+      toast.success('Cabinet created — you are its admin');
       router.replace('/');
       router.refresh();
     } catch (error) {
@@ -57,16 +54,6 @@ export function RegisterForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      <Input
-        label="Full name"
-        autoComplete="name"
-        placeholder="Ada Lovelace"
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        error={errors.name}
-        icon={<UserIcon className="h-4 w-4" />}
-        required
-      />
       <Input
         label="E-mail"
         type="email"
@@ -108,7 +95,7 @@ export function RegisterForm() {
         loading={submitting}
         leftIcon={<UserPlus className="h-4 w-4" />}
       >
-        Create account
+        Create cabinet
       </Button>
     </form>
   );

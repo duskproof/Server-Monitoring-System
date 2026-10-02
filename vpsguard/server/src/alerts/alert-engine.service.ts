@@ -51,6 +51,9 @@ export class AlertEngineService {
     const rules = await this.getRules();
 
     for (const rule of rules) {
+      if (rule.organizationId && server.organizationId && rule.organizationId !== server.organizationId) {
+        continue;
+      }
       if (rule.serverId && rule.serverId !== server.id) continue;
       if (rule.groupId && rule.groupId !== server.groupId) continue;
       if (rule.metric === 'agent.offline') continue; // handled by the heartbeat scheduler
@@ -118,7 +121,7 @@ export class AlertEngineService {
 
     this.logger.warn(`Alert firing: ${rule.name} on ${server.name} (${value.toFixed(2)})`);
     this.realtime.emitAlert(alert);
-    await this.notifications.dispatch(alert, rule.channels ?? []);
+    await this.notifications.dispatch(alert, rule.channels ?? [], server.organizationId ?? undefined);
 
     if (rule.autoHealCommand?.type) {
       await this.triggerSelfHealing(rule, server);
@@ -128,7 +131,7 @@ export class AlertEngineService {
   /** Queues the rule's remediation command on the agent (self-healing). */
   private async triggerSelfHealing(rule: AlertRule, server: MonitoredServer): Promise<void> {
     try {
-      await this.commands.create(
+      await this.commands.createForServer(
         server.id,
         rule.autoHealCommand.type as CommandType,
         rule.autoHealCommand.args ?? {},
@@ -157,7 +160,11 @@ export class AlertEngineService {
       alert.resolvedAt = new Date();
       await this.alerts.save(alert);
       this.realtime.emitAlert(alert);
-      await this.notifications.dispatch(alert, rule.channels ?? []);
+      await this.notifications.dispatch(
+        alert,
+        rule.channels ?? [],
+        server.organizationId ?? undefined,
+      );
       this.logger.log(`Alert resolved: ${rule.name} on ${server.name}`);
     }
   }

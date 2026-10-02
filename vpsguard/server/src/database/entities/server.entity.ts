@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Group } from './group.entity';
+import { Organization } from './organization.entity';
 
 export enum ServerStatus {
   ONLINE = 'online',
@@ -40,6 +41,14 @@ export class MonitoredServer {
 
   @Column({ name: 'api_key_hash', type: 'varchar', length: 255 })
   apiKeyHash: string;
+
+  @Index()
+  @Column({ name: 'organization_id', type: 'uuid', nullable: true })
+  organizationId: string | null;
+
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'organization_id' })
+  organization: Organization | null;
 
   @ManyToOne(() => Group, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'group_id' })

@@ -9,10 +9,12 @@ import {
   Group,
   Integration,
   MonitoredServer,
+  Organization,
   User,
 } from './entities';
 
 export const ENTITIES = [
+  Organization,
   User,
   Group,
   MonitoredServer,

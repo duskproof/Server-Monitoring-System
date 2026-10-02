@@ -1,6 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Roles } from '../common/decorators';
+import { AuthenticatedUser, CurrentUser, Roles } from '../common/decorators';
+import { requireOrganizationId } from '../common/tenant';
 import { UserRole } from '../database/entities';
 import { AuditService } from './audit.service';
 
@@ -12,9 +13,14 @@ export class AuditController {
 
   @Get()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'List audit log entries (admin only)' })
-  list(@Query('limit') limit?: string, @Query('offset') offset?: string) {
+  @ApiOperation({ summary: 'List audit log entries for your cabinet (admin only)' })
+  list(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
     return this.audit.list(
+      requireOrganizationId(user),
       limit ? Number.parseInt(limit, 10) : 200,
       offset ? Number.parseInt(offset, 10) : 0,
     );

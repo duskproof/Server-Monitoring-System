@@ -1,7 +1,6 @@
 'use client';
 
 import { BellRing, ChevronLeft, LayoutDashboard, Server, Settings, X } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
@@ -85,9 +84,12 @@ export function Sidebar() {
           collapsed ? 'w-[72px]' : 'w-64',
         )}
       >
-        <div className={cn('flex h-16 items-center gap-2.5 border-b border-line px-4', collapsed && 'justify-center px-2')}>
-          <Image src="/icon.svg" alt="" width={30} height={30} priority />
-          {!collapsed ? <span className="text-base font-semibold tracking-tight text-content">VPSGuard</span> : null}
+        <div className={cn('flex h-16 items-center border-b border-line px-4', collapsed && 'justify-center px-2')}>
+          {!collapsed ? (
+            <span className="text-base font-semibold tracking-tight text-content">DuskProof guard</span>
+          ) : (
+            <span className="text-sm font-semibold tracking-tight text-content">DP</span>
+          )}
         </div>
 
         {nav}
@@ -126,8 +128,7 @@ export function Sidebar() {
         >
           <div className="flex h-16 items-center justify-between border-b border-line px-4">
             <div className="flex items-center gap-2.5">
-              <Image src="/icon.svg" alt="" width={30} height={30} />
-              <span className="text-base font-semibold tracking-tight text-content">VPSGuard</span>
+              <span className="text-base font-semibold tracking-tight text-content">DuskProof guard</span>
             </div>
             <button
               type="button"

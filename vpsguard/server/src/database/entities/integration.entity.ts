@@ -3,9 +3,12 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Organization } from './organization.entity';
 
 export enum IntegrationType {
   TELEGRAM = 'telegram',
@@ -18,6 +21,14 @@ export enum IntegrationType {
 export class Integration {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Index()
+  @Column({ name: 'organization_id', type: 'uuid', nullable: true })
+  organizationId: string | null;
+
+  @ManyToOne(() => Organization, { onDelete: 'CASCADE', nullable: true })
+  @JoinColumn({ name: 'organization_id' })
+  organization: Organization | null;
 
   @Index()
   @Column({ type: 'enum', enum: IntegrationType })

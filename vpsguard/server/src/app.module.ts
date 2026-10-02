@@ -18,6 +18,7 @@ import { InfluxModule } from './influx/influx.module';
 import { IngestModule } from './ingest/ingest.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { OrganizationsModule } from './organizations/organizations.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { ReportsModule } from './reports/reports.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
@@ -31,6 +32,7 @@ import { UsersModule } from './users/users.module';
     // Baseline API rate limiting; the ingest endpoint opts out via @SkipThrottle.
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 300 }]),
     DatabaseModule,
+    OrganizationsModule,
     InfluxModule,
     AuditModule,
     AuthModule,

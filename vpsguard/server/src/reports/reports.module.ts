@@ -4,6 +4,8 @@ import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
 import { Response } from 'express';
 import PDFDocument from 'pdfkit';
 import { Between, Repository } from 'typeorm';
+import { AuthenticatedUser, CurrentUser } from '../common/decorators';
+import { requireOrganizationId } from '../common/tenant';
 import { Alert, MonitoredServer } from '../database/entities';
 import { InfluxService } from '../influx/influx.service';
 
@@ -24,10 +26,15 @@ export class ReportsService {
     private readonly influx: InfluxService,
   ) {}
 
-  async build(from: string, to: string, serverId?: string): Promise<ReportRow[]> {
+  async build(
+    organizationId: string,
+    from: string,
+    to: string,
+    serverId?: string,
+  ): Promise<ReportRow[]> {
     const servers = serverId
-      ? await this.servers.find({ where: { id: serverId } })
-      : await this.servers.find();
+      ? await this.servers.find({ where: { id: serverId, organizationId } })
+      : await this.servers.find({ where: { organizationId } });
 
     const rows: ReportRow[] = [];
     for (const server of servers) {
@@ -143,13 +150,14 @@ export class ReportsController {
   @ApiQuery({ name: 'to', required: false, example: 'now()' })
   @ApiQuery({ name: 'format', required: false, enum: ['json', 'csv', 'pdf'] })
   async generate(
+    @CurrentUser() user: AuthenticatedUser,
     @Res() res: Response,
     @Query('from') from = '-7d',
     @Query('to') to = 'now()',
     @Query('format') format: 'json' | 'csv' | 'pdf' = 'json',
     @Query('serverId') serverId?: string,
   ): Promise<void> {
-    const rows = await this.reports.build(from, to, serverId);
+    const rows = await this.reports.build(requireOrganizationId(user), from, to, serverId);
 
     if (format === 'csv') {
       res.setHeader('Content-Type', 'text/csv; charset=utf-8');

@@ -2,6 +2,8 @@ import { Controller, Get, Module, NotFoundException, Param, ParseUUIDPipe, Query
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { InjectRepository, TypeOrmModule } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { AuthenticatedUser, CurrentUser } from '../common/decorators';
+import { assertSameOrganization, requireOrganizationId } from '../common/tenant';
 import { MonitoredServer } from '../database/entities';
 import { InfluxService } from '../influx/influx.service';
 import {
@@ -29,12 +31,14 @@ export class MetricsController {
   @ApiQuery({ name: 'to', required: false, example: 'now()' })
   @ApiQuery({ name: 'interval', required: false, example: '1m' })
   async series(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Query('metric') metric = 'cpu.percent',
     @Query('from') from = '-1h',
     @Query('to') to = 'now()',
     @Query('interval') interval = '1m',
   ) {
+    await this.requireServer(requireOrganizationId(user), id);
     const series = await this.influx.querySeries(id, metric, from, to, interval);
     return { metric, from, to, interval, series };
   }
@@ -42,10 +46,12 @@ export class MetricsController {
   @Get('forecast')
   @ApiOperation({ summary: 'Predict when a metric will cross a threshold' })
   async forecast(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Query('metric') metric = 'disk.used_percent',
     @Query('target') target = '100',
   ) {
+    await this.requireServer(requireOrganizationId(user), id);
     const hours = await this.influx.forecastHoursToThreshold(
       id,
       metric,
@@ -61,56 +67,57 @@ export class MetricsController {
 
   @Get('processes')
   @ApiOperation({ summary: 'Latest process snapshot' })
-  async processes(@Param('id', ParseUUIDPipe) id: string) {
-    const snapshot = await this.raw(id);
+  async processes(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    const snapshot = await this.raw(requireOrganizationId(user), id);
     return mapProcesses(snapshot.processes, snapshot.process_summary);
   }
 
   @Get('docker')
   @ApiOperation({ summary: 'Latest Docker container snapshot' })
-  async docker(@Param('id', ParseUUIDPipe) id: string) {
-    return mapDocker((await this.raw(id)).docker);
+  async docker(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return mapDocker((await this.raw(requireOrganizationId(user), id)).docker);
   }
 
   @Get('services')
   @ApiOperation({ summary: 'Latest systemd service statuses' })
-  async services(@Param('id', ParseUUIDPipe) id: string) {
-    return mapServices((await this.raw(id)).services);
+  async services(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return mapServices((await this.raw(requireOrganizationId(user), id)).services);
   }
 
   @Get('temperatures')
   @ApiOperation({ summary: 'Latest temperature sensor readings' })
-  async temperatures(@Param('id', ParseUUIDPipe) id: string) {
-    return mapTemperatures((await this.raw(id)).temperatures);
+  async temperatures(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return mapTemperatures((await this.raw(requireOrganizationId(user), id)).temperatures);
   }
 
   @Get('ssl')
   @ApiOperation({ summary: 'Latest SSL certificate checks' })
-  async ssl(@Param('id', ParseUUIDPipe) id: string) {
-    return mapSsl((await this.raw(id)).ssl);
+  async ssl(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return mapSsl((await this.raw(requireOrganizationId(user), id)).ssl);
   }
 
   @Get('smart')
   @ApiOperation({ summary: 'Latest SMART disk health data' })
-  async smart(@Param('id', ParseUUIDPipe) id: string) {
-    return (await this.raw(id)).smart ?? [];
+  async smart(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return (await this.raw(requireOrganizationId(user), id)).smart ?? [];
   }
 
   @Get('security')
   @ApiOperation({ summary: 'Latest security posture snapshot' })
-  async security(@Param('id', ParseUUIDPipe) id: string) {
-    return (await this.raw(id)).security ?? null;
+  async security(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return (await this.raw(requireOrganizationId(user), id)).security ?? null;
   }
 
   @Get('logs')
   @ApiOperation({ summary: 'Latest log scan results' })
   async logs(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Query('file') file?: string,
     @Query('pattern') pattern?: string,
     @Query('limit') limit?: string,
   ) {
-    const snapshot = await this.raw(id);
+    const snapshot = await this.raw(requireOrganizationId(user), id);
     return mapLogs(snapshot.logs, {
       file,
       pattern,
@@ -118,9 +125,15 @@ export class MetricsController {
     });
   }
 
-  private async raw(id: string): Promise<Record<string, any>> {
+  private async requireServer(organizationId: string, id: string): Promise<MonitoredServer> {
     const server = await this.servers.findOne({ where: { id } });
     if (!server) throw new NotFoundException('Server not found');
+    assertSameOrganization(server.organizationId, organizationId, 'Server not found');
+    return server;
+  }
+
+  private async raw(organizationId: string, id: string): Promise<Record<string, any>> {
+    const server = await this.requireServer(organizationId, id);
     return (server.rawSnapshot as Record<string, any>) ?? {};
   }
 }

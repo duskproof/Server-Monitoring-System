@@ -45,7 +45,12 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       const payload = await this.jwt.verifyAsync(String(token), {
         secret: this.config.get<string>('jwt.accessSecret'),
       });
-      client.data.user = { id: payload.sub, email: payload.email, role: payload.role };
+      client.data.user = {
+        id: payload.sub,
+        email: payload.email,
+        role: payload.role,
+        organizationId: payload.organizationId,
+      };
     } catch {
       this.logger.warn(`Rejected unauthenticated socket ${client.id}`);
       client.emit('error', { message: 'Unauthorized' });
@@ -62,8 +67,15 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   @SubscribeMessage('subscribe:server')
-  subscribeServer(client: Socket, payload: { serverId: string }): void {
-    client.join(`server:${payload.serverId}`);
+  async subscribeServer(client: Socket, payload: { serverId: string }): Promise<void> {
+    const orgId = client.data?.user?.organizationId as string | undefined;
+    if (!orgId || !payload?.serverId) return;
+    try {
+      await this.servers.findEntity(payload.serverId, orgId);
+      client.join(`server:${payload.serverId}`);
+    } catch {
+      client.emit('error', { message: 'Server not found' });
+    }
   }
 
   @SubscribeMessage('unsubscribe:server')
@@ -73,7 +85,9 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   @SubscribeMessage('subscribe:overview')
   subscribeOverview(client: Socket): void {
-    client.join('overview');
+    const orgId = client.data?.user?.organizationId as string | undefined;
+    if (!orgId) return;
+    client.join(`overview:${orgId}`);
   }
 
   // ---------------------------------------------------------------- broadcast
@@ -90,8 +104,8 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.server?.emit('server:status', { serverId, status });
   }
 
-  emitOverview(overview: unknown): void {
-    this.server?.to('overview').emit('overview', overview);
+  emitOverview(organizationId: string, overview: unknown): void {
+    this.server?.to(`overview:${organizationId}`).emit('overview', overview);
   }
 
   // ----------------------------------------------------------- web terminal
@@ -104,7 +118,7 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
       return;
     }
 
-    const server = await this.servers.findEntity(payload.serverId);
+    const server = await this.servers.findEntity(payload.serverId, user.organizationId);
     if (!server.ipAddress) {
       client.emit('terminal:error', { message: 'Server IP address is unknown' });
       return;
@@ -170,6 +184,8 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   @SubscribeMessage('terminal:close')
   handleClose(client: Socket, payload: { sessionId: string }): void {
+    const session = this.sessions.get(payload.sessionId);
+    if (!session || session.userId !== client.data?.user?.id) return;
     this.closeTerminal(payload.sessionId);
   }
 

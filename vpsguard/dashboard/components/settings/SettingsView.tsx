@@ -38,7 +38,7 @@ export function SettingsView() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-content">Settings</h1>
         <p className="mt-1 text-sm text-muted">
-          Manage your account, server groups, notification channels and, if you are an admin, users.
+          Manage your account, groups, integrations and, if you are an admin, users in this cabinet.
         </p>
       </div>
 

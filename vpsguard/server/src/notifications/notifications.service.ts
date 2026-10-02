@@ -24,7 +24,11 @@ export class NotificationsService {
   ) {}
 
   /** Fans an alert out to every requested channel; individual failures are isolated. */
-  async dispatch(alert: Alert, channels: string[]): Promise<void> {
+  async dispatch(
+    alert: Alert,
+    channels: string[],
+    organizationId?: string | null,
+  ): Promise<void> {
     const targets = channels.length > 0 ? channels : ['telegram'];
     const message = this.renderAlert(alert);
 
@@ -33,13 +37,17 @@ export class NotificationsService {
         try {
           switch (channel) {
             case 'telegram':
-              return await this.sendTelegram(message);
+              return await this.sendTelegram(message, organizationId);
             case 'slack':
-              return await this.sendSlack(message);
+              return await this.sendSlack(message, organizationId);
             case 'email':
-              return await this.sendEmail(`[${alert.severity}] ${alert.ruleName}`, message);
+              return await this.sendEmail(
+                `[${alert.severity}] ${alert.ruleName}`,
+                message,
+                organizationId,
+              );
             case 'webhook':
-              return await this.sendWebhook(alert);
+              return await this.sendWebhook(alert, organizationId);
             default:
               this.logger.warn(`Unknown notification channel "${channel}"`);
           }
@@ -50,21 +58,24 @@ export class NotificationsService {
     );
   }
 
-  async sendTest(channel: string): Promise<{ ok: boolean; message: string }> {
+  async sendTest(
+    channel: string,
+    organizationId?: string,
+  ): Promise<{ ok: boolean; message: string }> {
     const text = 'VPSGuard test notification. If you can read this, the channel works.';
     try {
       switch (channel) {
         case 'telegram':
-          await this.sendTelegram(text);
+          await this.sendTelegram(text, organizationId);
           break;
         case 'slack':
-          await this.sendSlack(text);
+          await this.sendSlack(text, organizationId);
           break;
         case 'email':
-          await this.sendEmail('VPSGuard test notification', text);
+          await this.sendEmail('VPSGuard test notification', text, organizationId);
           break;
         case 'webhook':
-          await this.sendWebhook({ test: true, message: text } as any);
+          await this.sendWebhook({ test: true, message: text } as any, organizationId);
           break;
         default:
           return { ok: false, message: `Unknown channel "${channel}"` };
@@ -93,13 +104,18 @@ export class NotificationsService {
       : text;
   }
 
-  private async resolveConfig(type: IntegrationType): Promise<Record<string, any> | null> {
-    const integration = await this.integrations.findOne({ where: { type, enabled: true } });
+  private async resolveConfig(
+    type: IntegrationType,
+    organizationId?: string | null,
+  ): Promise<Record<string, any> | null> {
+    const where: Record<string, any> = { type, enabled: true };
+    if (organizationId) where.organizationId = organizationId;
+    const integration = await this.integrations.findOne({ where });
     return integration?.config ?? null;
   }
 
-  private async sendTelegram(text: string): Promise<void> {
-    const stored = await this.resolveConfig(IntegrationType.TELEGRAM);
+  private async sendTelegram(text: string, organizationId?: string | null): Promise<void> {
+    const stored = await this.resolveConfig(IntegrationType.TELEGRAM, organizationId);
     const botToken = stored?.botToken || this.config.get<string>('notifications.telegram.botToken');
     const chatId = stored?.chatId || this.config.get<string>('notifications.telegram.chatId');
     if (!botToken || !chatId) throw new Error('Telegram bot token or chat ID is not configured');
@@ -114,8 +130,8 @@ export class NotificationsService {
     }
   }
 
-  private async sendSlack(text: string): Promise<void> {
-    const stored = await this.resolveConfig(IntegrationType.SLACK);
+  private async sendSlack(text: string, organizationId?: string | null): Promise<void> {
+    const stored = await this.resolveConfig(IntegrationType.SLACK, organizationId);
     const webhookUrl = stored?.webhookUrl || this.config.get<string>('notifications.slack.webhookUrl');
     if (!webhookUrl) throw new Error('Slack webhook URL is not configured');
 
@@ -127,8 +143,12 @@ export class NotificationsService {
     if (!response.ok) throw new Error(`Slack webhook responded ${response.status}`);
   }
 
-  private async sendEmail(subject: string, text: string): Promise<void> {
-    const stored = await this.resolveConfig(IntegrationType.EMAIL);
+  private async sendEmail(
+    subject: string,
+    text: string,
+    organizationId?: string | null,
+  ): Promise<void> {
+    const stored = await this.resolveConfig(IntegrationType.EMAIL, organizationId);
     const smtp = {
       host: stored?.host || this.config.get<string>('notifications.smtp.host'),
       port: stored?.port || this.config.get<number>('notifications.smtp.port'),
@@ -148,8 +168,8 @@ export class NotificationsService {
     await transport.sendMail({ from: smtp.from, to: smtp.to, subject, text });
   }
 
-  private async sendWebhook(payload: unknown): Promise<void> {
-    const stored = await this.resolveConfig(IntegrationType.WEBHOOK);
+  private async sendWebhook(payload: unknown, organizationId?: string | null): Promise<void> {
+    const stored = await this.resolveConfig(IntegrationType.WEBHOOK, organizationId);
     if (!stored?.url) throw new Error('Webhook URL is not configured');
 
     const response = await fetch(stored.url, {

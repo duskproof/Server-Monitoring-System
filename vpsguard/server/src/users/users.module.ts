@@ -20,6 +20,7 @@ import { Repository } from 'typeorm';
 import { AuditModule } from '../audit/audit.module';
 import { AuditService } from '../audit/audit.service';
 import { AuthenticatedUser, CurrentUser, Roles } from '../common/decorators';
+import { requireOrganizationId } from '../common/tenant';
 import { User, UserRole } from '../database/entities';
 
 class CreateUserDto {
@@ -69,25 +70,29 @@ class UpdateUserDto {
 export class UsersService {
   constructor(@InjectRepository(User) private readonly users: Repository<User>) {}
 
-  async list() {
-    const rows = await this.users.find({ order: { createdAt: 'ASC' } });
+  async list(organizationId: string) {
+    const rows = await this.users.find({
+      where: { organizationId },
+      order: { createdAt: 'ASC' },
+    });
     return rows.map((user) => this.toDto(user));
   }
 
-  async create(dto: CreateUserDto) {
+  async create(organizationId: string, dto: CreateUserDto) {
     const user = await this.users.save(
       this.users.create({
         email: dto.email.toLowerCase(),
         passwordHash: await bcrypt.hash(dto.password, 12),
         name: dto.name ?? null,
         role: dto.role,
+        organizationId,
       }),
     );
     return this.toDto(user);
   }
 
-  async update(id: string, dto: UpdateUserDto) {
-    const user = await this.users.findOne({ where: { id } });
+  async update(organizationId: string, id: string, dto: UpdateUserDto) {
+    const user = await this.users.findOne({ where: { id, organizationId } });
     if (!user) throw new NotFoundException('User not found');
 
     if (dto.password) user.passwordHash = await bcrypt.hash(dto.password, 12);
@@ -95,14 +100,13 @@ export class UsersService {
     if (dto.role) user.role = dto.role;
     if (dto.isActive !== undefined) user.isActive = dto.isActive;
 
-    // Any credential or role change invalidates existing sessions.
     if (dto.password || dto.role || dto.isActive === false) user.refreshTokenHash = null;
 
     return this.toDto(await this.users.save(user));
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.users.delete({ id });
+  async remove(organizationId: string, id: string): Promise<void> {
+    const result = await this.users.delete({ id, organizationId });
     if (!result.affected) throw new NotFoundException('User not found');
   }
 
@@ -129,16 +133,16 @@ export class UsersController {
 
   @Get()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'List users (admin only)' })
-  list() {
-    return this.users.list();
+  @ApiOperation({ summary: 'List users in your cabinet (admin only)' })
+  list(@CurrentUser() actor: AuthenticatedUser) {
+    return this.users.list(requireOrganizationId(actor));
   }
 
   @Post()
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Create a user (admin only)' })
+  @ApiOperation({ summary: 'Create a user in your cabinet (admin only)' })
   async create(@Body() dto: CreateUserDto, @CurrentUser() actor: AuthenticatedUser) {
-    const user = await this.users.create(dto);
+    const user = await this.users.create(requireOrganizationId(actor), dto);
     await this.audit.record(actor.id, actor.email, 'user.create', {
       userId: user.id,
       role: user.role,
@@ -148,13 +152,13 @@ export class UsersController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update a user (admin only)' })
+  @ApiOperation({ summary: 'Update a user in your cabinet (admin only)' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
     @CurrentUser() actor: AuthenticatedUser,
   ) {
-    const user = await this.users.update(id, dto);
+    const user = await this.users.update(requireOrganizationId(actor), id, dto);
     await this.audit.record(actor.id, actor.email, 'user.update', { userId: id });
     return user;
   }
@@ -162,9 +166,9 @@ export class UsersController {
   @Delete(':id')
   @Roles(UserRole.ADMIN)
   @HttpCode(204)
-  @ApiOperation({ summary: 'Delete a user (admin only)' })
+  @ApiOperation({ summary: 'Delete a user in your cabinet (admin only)' })
   async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() actor: AuthenticatedUser) {
-    await this.users.remove(id);
+    await this.users.remove(requireOrganizationId(actor), id);
     await this.audit.record(actor.id, actor.email, 'user.delete', { userId: id });
   }
 }

@@ -44,7 +44,7 @@ export function Topbar() {
     return () => document.removeEventListener('mousedown', onClick);
   }, [menuOpen]);
 
-  const title = TITLES.find((entry) => entry.match(pathname))?.title ?? 'VPSGuard';
+  const title = TITLES.find((entry) => entry.match(pathname))?.title ?? 'DuskProof guard';
 
   const onLogout = () => {
     logout();
@@ -112,9 +112,12 @@ export function Topbar() {
             </span>
             <span className="hidden text-left sm:block">
               <span className="block max-w-[10rem] truncate text-sm font-medium text-content">
-                {user?.name || user?.email || 'Account'}
+                {user?.organizationName || user?.name || user?.email || 'Cabinet'}
               </span>
-              <span className="block text-xs capitalize text-muted">{user?.role ?? '—'}</span>
+              <span className="block text-xs capitalize text-muted">
+                {user?.role ?? '—'}
+                {user?.organizationName ? ` · ${user.name || user.email}` : ''}
+              </span>
             </span>
             <ChevronDown className="hidden h-4 w-4 text-muted sm:block" />
           </button>
@@ -125,6 +128,11 @@ export function Topbar() {
               className="absolute right-0 top-[calc(100%+8px)] w-56 animate-fade-in overflow-hidden rounded-xl border border-line bg-surface shadow-xl"
             >
               <div className="border-b border-line px-4 py-3">
+                {user?.organizationName ? (
+                  <p className="truncate text-xs font-medium uppercase tracking-wide text-muted">
+                    {user.organizationName}
+                  </p>
+                ) : null}
                 <p className="truncate text-sm font-medium text-content">{user?.name || 'Account'}</p>
                 <p className="truncate text-xs text-muted">{user?.email}</p>
               </div>

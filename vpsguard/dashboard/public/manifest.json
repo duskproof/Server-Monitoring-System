@@ -1,6 +1,6 @@
 {
-  "name": "VPSGuard — VPS/VDS Monitoring",
-  "short_name": "VPSGuard",
+  "name": "DuskProof guard — VPS/VDS Monitoring",
+  "short_name": "DuskProof guard",
   "description": "Real-time monitoring, alerting and remote control for your VPS/VDS fleet.",
   "start_url": "/",
   "scope": "/",

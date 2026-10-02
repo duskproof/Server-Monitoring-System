@@ -13,6 +13,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuditService } from '../audit/audit.service';
 import { AuthenticatedUser, CurrentUser, Roles } from '../common/decorators';
+import { requireOrganizationId } from '../common/tenant';
 import { ServerStatus, UserRole } from '../database/entities';
 import { CreateServerDto, UpdateServerDto } from './dto';
 import { ServersService } from './servers.service';
@@ -27,32 +28,33 @@ export class ServersController {
   ) {}
 
   @Get('overview')
-  @ApiOperation({ summary: 'Fleet-wide overview counters' })
-  overview() {
-    return this.servers.overview();
+  @ApiOperation({ summary: 'Cabinet overview counters' })
+  overview(@CurrentUser() user: AuthenticatedUser) {
+    return this.servers.overview(requireOrganizationId(user));
   }
 
   @Get('servers')
-  @ApiOperation({ summary: 'List monitored servers' })
+  @ApiOperation({ summary: 'List monitored servers in your cabinet' })
   list(
+    @CurrentUser() user: AuthenticatedUser,
     @Query('group') groupId?: string,
     @Query('status') status?: ServerStatus,
     @Query('search') search?: string,
   ) {
-    return this.servers.list({ groupId, status, search });
+    return this.servers.list(requireOrganizationId(user), { groupId, status, search });
   }
 
   @Get('servers/:id')
   @ApiOperation({ summary: 'Get one server with its latest metrics' })
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.servers.findOne(id);
+  findOne(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.servers.findOne(requireOrganizationId(user), id);
   }
 
   @Post('servers')
   @Roles(UserRole.ADMIN, UserRole.OPERATOR)
   @ApiOperation({ summary: 'Register a server and generate its agent API key' })
   async create(@Body() dto: CreateServerDto, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.servers.create(dto);
+    const result = await this.servers.create(requireOrganizationId(user), dto);
     await this.audit.record(user.id, user.email, 'server.create', {
       serverId: result.id,
       name: result.name,
@@ -68,7 +70,7 @@ export class ServersController {
     @Body() dto: UpdateServerDto,
     @CurrentUser() user: AuthenticatedUser,
   ) {
-    const result = await this.servers.update(id, dto);
+    const result = await this.servers.update(requireOrganizationId(user), id, dto);
     await this.audit.record(user.id, user.email, 'server.update', { serverId: id });
     return result;
   }
@@ -77,7 +79,7 @@ export class ServersController {
   @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Rotate the agent API key' })
   async rotate(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
-    const result = await this.servers.rotateApiKey(id);
+    const result = await this.servers.rotateApiKey(requireOrganizationId(user), id);
     await this.audit.record(user.id, user.email, 'server.rotate_key', { serverId: id });
     return result;
   }
@@ -87,7 +89,7 @@ export class ServersController {
   @HttpCode(204)
   @ApiOperation({ summary: 'Delete a server' })
   async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {
-    await this.servers.remove(id);
+    await this.servers.remove(requireOrganizationId(user), id);
     await this.audit.record(user.id, user.email, 'server.delete', { serverId: id });
   }
 }

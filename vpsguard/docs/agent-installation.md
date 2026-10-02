@@ -439,7 +439,8 @@ are posted back to `POST /api/v1/agent/commands/:id/result`.
 
 Every invocation uses an argument list (never `shell=True`), is bounded by the
 effective timeout, and has its output truncated to 8 KiB. Set
-`allow_commands = false` to refuse all of them.
+Remote commands are **off by default**. Set `allow_commands = true` (or install with
+`--enable-commands`) only if you intentionally want dashboard-driven actions on that host.
 
 ---
 

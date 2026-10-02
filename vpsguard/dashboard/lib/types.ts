@@ -13,6 +13,8 @@ export interface User {
   email: string;
   name: string;
   role: Role;
+  organizationId?: string;
+  organizationName?: string;
   createdAt: string;
   lastLoginAt?: string | null;
 }
@@ -31,7 +33,7 @@ export interface LoginPayload {
 export interface RegisterPayload {
   email: string;
   password: string;
-  name: string;
+  name?: string;
 }
 
 /* ------------------------------------------------------------------ */

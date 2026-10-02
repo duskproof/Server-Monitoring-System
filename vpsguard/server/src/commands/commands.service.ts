@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { Command, CommandStatus, CommandType } from '../database/entities';
+import { Command, CommandStatus, CommandType, MonitoredServer } from '../database/entities';
 
 export interface CommandResultDto {
   status: 'success' | 'failed' | 'timeout' | 'rejected';
@@ -18,9 +18,37 @@ const MAX_OUTPUT_CHARS = 8192;
 export class CommandsService {
   private readonly logger = new Logger(CommandsService.name);
 
-  constructor(@InjectRepository(Command) private readonly commands: Repository<Command>) {}
+  constructor(
+    @InjectRepository(Command) private readonly commands: Repository<Command>,
+    @InjectRepository(MonitoredServer) private readonly servers: Repository<MonitoredServer>,
+  ) {}
 
-  create(
+  async create(
+    organizationId: string,
+    serverId: string,
+    type: CommandType,
+    args: Record<string, any> = {},
+    createdBy: string | null = null,
+    timeoutSeconds = 60,
+  ) {
+    const server = await this.servers.findOne({ where: { id: serverId } });
+    if (!server || server.organizationId !== organizationId) {
+      throw new NotFoundException('Server not found');
+    }
+    return this.commands.save(
+      this.commands.create({
+        serverId,
+        type,
+        args,
+        createdBy,
+        timeoutSeconds,
+        status: CommandStatus.PENDING,
+      }),
+    );
+  }
+
+  /** Used by alert auto-heal — server already known, no org check from user context. */
+  async createForServer(
     serverId: string,
     type: CommandType,
     args: Record<string, any> = {},
@@ -39,10 +67,6 @@ export class CommandsService {
     );
   }
 
-  /**
-   * Pops pending commands for an agent and marks them dispatched, so the same
-   * command is never handed out twice.
-   */
   async claimPending(serverId: string, limit = 5) {
     const pending = await this.commands.find({
       where: { serverId, status: CommandStatus.PENDING },
@@ -64,9 +88,12 @@ export class CommandsService {
     }));
   }
 
-  async recordResult(id: string, result: CommandResultDto) {
+  async recordResult(id: string, result: CommandResultDto, agentServerId?: string) {
     const command = await this.commands.findOne({ where: { id } });
     if (!command) throw new NotFoundException('Command not found');
+    if (agentServerId && command.serverId !== agentServerId) {
+      throw new NotFoundException('Command not found');
+    }
 
     command.status = result.status as CommandStatus;
     command.exitCode = result.exit_code ?? null;
@@ -79,15 +106,17 @@ export class CommandsService {
     return this.commands.save(command);
   }
 
-  history(serverId?: string, limit = 100) {
-    return this.commands.find({
-      where: serverId ? { serverId } : {},
-      order: { createdAt: 'DESC' },
-      take: Math.min(limit, 500),
-    });
+  async history(organizationId: string, serverId?: string, limit = 100) {
+    const qb = this.commands
+      .createQueryBuilder('command')
+      .innerJoin(MonitoredServer, 'server', 'server.id = command.server_id')
+      .where('server.organization_id = :organizationId', { organizationId })
+      .orderBy('command.created_at', 'DESC')
+      .take(Math.min(limit, 500));
+    if (serverId) qb.andWhere('command.server_id = :serverId', { serverId });
+    return qb.getMany();
   }
 
-  /** Requeues commands that were dispatched but never reported back. */
   async expireStale(maxAgeSeconds = 600): Promise<number> {
     const cutoff = new Date(Date.now() - maxAgeSeconds * 1000);
     const result = await this.commands

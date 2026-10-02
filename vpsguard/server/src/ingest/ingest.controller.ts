@@ -33,7 +33,8 @@ export class IngestController {
   reportResult(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: CommandResultBodyDto,
+    @Req() request: any,
   ) {
-    return this.commands.recordResult(id, body);
+    return this.commands.recordResult(id, body, request.agentServer?.id);
   }
 }

@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { In, Repository } from 'typeorm';
+import { assertSameOrganization } from '../common/tenant';
 import { Group, MonitoredServer, ServerStatus, Alert, AlertStatus } from '../database/entities';
 import { CreateServerDto, UpdateServerDto } from './dto';
 
@@ -22,10 +23,11 @@ export class ServersService {
     private readonly config: ConfigService,
   ) {}
 
-  async list(filters: ServerListFilters = {}) {
+  async list(organizationId: string, filters: ServerListFilters = {}) {
     const query = this.servers
       .createQueryBuilder('server')
       .leftJoinAndSelect('server.group', 'group')
+      .where('server.organization_id = :organizationId', { organizationId })
       .orderBy('server.name', 'ASC');
 
     if (filters.groupId) query.andWhere('server.group_id = :groupId', { groupId: filters.groupId });
@@ -40,15 +42,19 @@ export class ServersService {
     return rows.map((row) => this.toDto(row));
   }
 
-  async findOne(id: string) {
+  async findOne(organizationId: string, id: string) {
     const server = await this.servers.findOne({ where: { id }, relations: { group: true } });
     if (!server) throw new NotFoundException('Server not found');
+    assertSameOrganization(server.organizationId, organizationId, 'Server not found');
     return this.toDto(server);
   }
 
-  async findEntity(id: string): Promise<MonitoredServer> {
+  async findEntity(id: string, organizationId?: string): Promise<MonitoredServer> {
     const server = await this.servers.findOne({ where: { id } });
     if (!server) throw new NotFoundException('Server not found');
+    if (organizationId) {
+      assertSameOrganization(server.organizationId, organizationId, 'Server not found');
+    }
     return server;
   }
 
@@ -56,11 +62,19 @@ export class ServersService {
    * Creates a server record and returns the plaintext API key exactly once.
    * Only a bcrypt hash is persisted, so the key cannot be recovered later.
    */
-  async create(dto: CreateServerDto) {
+  async create(organizationId: string, dto: CreateServerDto) {
+    if (dto.groupId) {
+      const group = await this.groups.findOne({ where: { id: dto.groupId } });
+      if (!group || group.organizationId !== organizationId) {
+        throw new NotFoundException('Group not found');
+      }
+    }
+
     const apiKey = `vg_${randomBytes(24).toString('hex')}`;
     const server = await this.servers.save(
       this.servers.create({
         name: dto.name,
+        organizationId,
         groupId: dto.groupId ?? null,
         ipAddress: this.normalizeHost(dto.ipAddress) || null,
         sshUser: dto.sshUser ?? null,
@@ -79,8 +93,14 @@ export class ServersService {
     };
   }
 
-  async update(id: string, dto: UpdateServerDto) {
-    const server = await this.findEntity(id);
+  async update(organizationId: string, id: string, dto: UpdateServerDto) {
+    const server = await this.findEntity(id, organizationId);
+    if (dto.groupId) {
+      const group = await this.groups.findOne({ where: { id: dto.groupId } });
+      if (!group || group.organizationId !== organizationId) {
+        throw new NotFoundException('Group not found');
+      }
+    }
     Object.assign(server, {
       name: dto.name ?? server.name,
       groupId: dto.groupId === undefined ? server.groupId : dto.groupId,
@@ -107,7 +127,6 @@ export class ServersService {
       try {
         const url = new URL(dashboard);
         const port = url.port || (url.protocol === 'https:' ? '443' : '80');
-        // Dashboard is often on :3000/:3010 — agents talk to the API on :4000.
         if (port === '3000' || port === '3010') {
           return `${url.protocol}//${url.hostname}:4000`;
         }
@@ -135,7 +154,6 @@ export class ServersService {
     if (!value?.trim()) return '';
     let raw = value.trim().replace(/\/+$/, '');
     if (!/^https?:\/\//i.test(raw)) {
-      // Bare IP/hostname → assume HTTP API on 4000.
       const host = raw.includes(':') ? raw : `${raw}:4000`;
       raw = `http://${host}`;
     }
@@ -147,14 +165,14 @@ export class ServersService {
     }
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.servers.delete({ id });
+  async remove(organizationId: string, id: string): Promise<void> {
+    await this.findEntity(id, organizationId);
+    const result = await this.servers.delete({ id, organizationId });
     if (!result.affected) throw new NotFoundException('Server not found');
   }
 
-  /** Rotates the API key, invalidating the agent's current credentials. */
-  async rotateApiKey(id: string) {
-    const server = await this.findEntity(id);
+  async rotateApiKey(organizationId: string, id: string) {
+    const server = await this.findEntity(id, organizationId);
     const apiKey = `vg_${randomBytes(24).toString('hex')}`;
     server.apiKeyPrefix = apiKey.slice(0, 11);
     server.apiKeyHash = await bcrypt.hash(apiKey, 10);
@@ -162,10 +180,6 @@ export class ServersService {
     return { apiKey };
   }
 
-  /**
-   * Resolves an agent API key to a server. Candidates are narrowed by prefix
-   * before the (expensive) bcrypt comparison.
-   */
   async resolveByApiKey(apiKey: string): Promise<MonitoredServer | null> {
     if (!apiKey?.startsWith('vg_')) return null;
     const candidates = await this.servers.find({
@@ -177,7 +191,6 @@ export class ServersService {
     return null;
   }
 
-  /** Flags servers that have missed their heartbeat window as offline. */
   async markStaleOffline(offlineAfterSeconds: number): Promise<MonitoredServer[]> {
     const cutoff = new Date(Date.now() - offlineAfterSeconds * 1000);
     const stale = await this.servers
@@ -195,8 +208,8 @@ export class ServersService {
     return stale;
   }
 
-  async overview() {
-    const servers = await this.servers.find();
+  async overview(organizationId: string) {
+    const servers = await this.servers.find({ where: { organizationId } });
     const online = servers.filter((s) => s.status === ServerStatus.ONLINE);
     const average = (selector: (metrics: Record<string, any>) => number): number => {
       const values = online
@@ -206,12 +219,20 @@ export class ServersService {
       return Number((values.reduce((a, b) => a + b, 0) / values.length).toFixed(1));
     };
 
+    const serverIds = servers.map((s) => s.id);
+    const firingAlerts =
+      serverIds.length === 0
+        ? 0
+        : await this.alerts.count({
+            where: { status: AlertStatus.FIRING, serverId: In(serverIds) },
+          });
+
     return {
       serverCount: servers.length,
       onlineCount: online.length,
       offlineCount: servers.filter((s) => s.status === ServerStatus.OFFLINE).length,
       warningCount: servers.filter((s) => s.status === ServerStatus.WARNING).length,
-      firingAlerts: await this.alerts.count({ where: { status: AlertStatus.FIRING } }),
+      firingAlerts,
       avgCpu: average((m) => m.cpuPercent),
       avgMemory: average((m) => m.memoryUsedPercent),
       avgDisk: average((m) => m.diskUsedPercent),
@@ -225,6 +246,7 @@ export class ServersService {
       hostname: server.hostname,
       ipAddress: server.ipAddress,
       status: server.status,
+      organizationId: server.organizationId,
       groupId: server.groupId,
       groupName: server.group?.name ?? null,
       lastSeen: server.lastSeen?.toISOString() ?? null,

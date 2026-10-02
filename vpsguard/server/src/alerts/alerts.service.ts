@@ -7,6 +7,7 @@ import {
   AlertRule,
   AlertSeverity,
   AlertStatus,
+  MonitoredServer,
 } from '../database/entities';
 import { AlertEngineService } from './alert-engine.service';
 import { CreateAlertRuleDto, UpdateAlertRuleDto } from './dto';
@@ -19,20 +20,27 @@ export class AlertsService {
     private readonly engine: AlertEngineService,
   ) {}
 
-  async listAlerts(status?: AlertStatus, serverId?: string, limit = 200) {
-    const where: Record<string, any> = {};
-    if (status) where.status = status;
-    if (serverId) where.serverId = serverId;
+  async listAlerts(organizationId: string, status?: AlertStatus, serverId?: string, limit = 200) {
+    const qb = this.alerts
+      .createQueryBuilder('alert')
+      .innerJoin(MonitoredServer, 'server', 'server.id = alert.server_id')
+      .where('server.organization_id = :organizationId', { organizationId })
+      .orderBy('alert.created_at', 'DESC')
+      .take(Math.min(limit, 500));
 
-    return this.alerts.find({
-      where,
-      order: { createdAt: 'DESC' },
-      take: Math.min(limit, 500),
-    });
+    if (status) qb.andWhere('alert.status = :status', { status });
+    if (serverId) qb.andWhere('alert.server_id = :serverId', { serverId });
+
+    return qb.getMany();
   }
 
-  async acknowledge(id: string, userId: string) {
-    const alert = await this.alerts.findOne({ where: { id } });
+  async acknowledge(organizationId: string, id: string, userId: string) {
+    const alert = await this.alerts
+      .createQueryBuilder('alert')
+      .innerJoin(MonitoredServer, 'server', 'server.id = alert.server_id')
+      .where('alert.id = :id', { id })
+      .andWhere('server.organization_id = :organizationId', { organizationId })
+      .getOne();
     if (!alert) throw new NotFoundException('Alert not found');
 
     alert.status = AlertStatus.ACKNOWLEDGED;
@@ -41,13 +49,17 @@ export class AlertsService {
     return this.alerts.save(alert);
   }
 
-  listRules() {
-    return this.rules.find({ order: { createdAt: 'DESC' } });
+  listRules(organizationId: string) {
+    return this.rules.find({
+      where: { organizationId },
+      order: { createdAt: 'DESC' },
+    });
   }
 
-  async createRule(dto: CreateAlertRuleDto) {
+  async createRule(organizationId: string, dto: CreateAlertRuleDto) {
     const rule = await this.rules.save(
       this.rules.create({
+        organizationId,
         name: dto.name,
         serverId: dto.serverId ?? null,
         groupId: dto.groupId ?? null,
@@ -65,8 +77,8 @@ export class AlertsService {
     return rule;
   }
 
-  async updateRule(id: string, dto: UpdateAlertRuleDto) {
-    const rule = await this.rules.findOne({ where: { id } });
+  async updateRule(organizationId: string, id: string, dto: UpdateAlertRuleDto) {
+    const rule = await this.rules.findOne({ where: { id, organizationId } });
     if (!rule) throw new NotFoundException('Alert rule not found');
 
     Object.assign(rule, dto);
@@ -75,15 +87,15 @@ export class AlertsService {
     return saved;
   }
 
-  async removeRule(id: string): Promise<void> {
-    const result = await this.rules.delete({ id });
+  async removeRule(organizationId: string, id: string): Promise<void> {
+    const result = await this.rules.delete({ id, organizationId });
     if (!result.affected) throw new NotFoundException('Alert rule not found');
     this.engine.invalidateRulesCache();
     this.engine.forget((key) => key.startsWith(`${id}:`));
   }
 
-  /** Seeds baseline hardware / anomaly rules (idempotent by rule name). */
-  async seedDefaultRules(): Promise<void> {
+  /** Seeds baseline hardware / anomaly rules for one cabinet (idempotent by name+org). */
+  async seedDefaultRules(organizationId: string): Promise<void> {
     const defaults = [
       {
         name: 'High CPU usage',
@@ -161,9 +173,11 @@ export class AlertsService {
 
     let created = 0;
     for (const rule of defaults) {
-      const existing = await this.rules.findOne({ where: { name: rule.name } });
+      const existing = await this.rules.findOne({
+        where: { name: rule.name, organizationId },
+      });
       if (existing) continue;
-      await this.rules.save(this.rules.create(rule));
+      await this.rules.save(this.rules.create({ ...rule, organizationId }));
       created += 1;
     }
     if (created > 0) this.engine.invalidateRulesCache();

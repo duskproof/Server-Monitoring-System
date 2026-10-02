@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuditModule } from '../audit/audit.module';
 import { CommandsModule } from '../commands/commands.module';
@@ -21,10 +21,4 @@ import { AlertsService } from './alerts.service';
   providers: [AlertsService, AlertEngineService],
   exports: [AlertsService, AlertEngineService],
 })
-export class AlertsModule implements OnModuleInit {
-  constructor(private readonly alerts: AlertsService) {}
-
-  async onModuleInit(): Promise<void> {
-    await this.alerts.seedDefaultRules();
-  }
-}
+export class AlertsModule {}
