@@ -6,6 +6,17 @@ Operators receive instant alerts for critical issues (high CPU load, low memory,
 
 ---
 
+## Projects in this repository
+
+| Project | Description |
+|---|---|
+| **Grafana stack** (this document) | Single-server monitoring built on off-the-shelf Prometheus, Grafana, Node Exporter and Alertmanager. Fastest way to monitor one machine. |
+| **[VPSGuard](vpsguard/README.md)** | Full multi-server monitoring platform: custom Python agent, NestJS API, InfluxDB time series, React dashboard, web terminal, self-healing and predictive alerts. Built to the specification in [`start.MD`](start.MD). |
+
+Pick the Grafana stack for a quick single-server setup, or VPSGuard when you need to manage a fleet with role-based access, remote commands and reporting.
+
+---
+
 ## Architecture
 
 ```

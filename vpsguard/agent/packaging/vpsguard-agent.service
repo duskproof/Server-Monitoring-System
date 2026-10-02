@@ -1,0 +1,50 @@
+[Unit]
+Description=VPSGuard monitoring agent
+Documentation=https://monitor.example.com/docs/agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=vpsguard
+Group=vpsguard
+ExecStart=/opt/vpsguard/bin/python -m vpsguard_agent run --config /etc/vpsguard/agent.conf
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+KillMode=mixed
+
+# systemd-managed dirs (correct ownership for User=)
+StateDirectory=vpsguard
+LogsDirectory=vpsguard
+ConfigurationDirectory=vpsguard
+
+# --- Resource budget ---
+MemoryMax=128M
+CPUQuota=20%
+TasksMax=64
+
+# --- Hardening (keep /var writable — SQLite needs state dir) ---
+NoNewPrivileges=yes
+ProtectSystem=full
+ProtectHome=yes
+ReadWritePaths=/var/lib/vpsguard /var/log/vpsguard
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+
+# The agent needs to read /proc and /sys for metrics.
+# Uncomment if SMART data is required (raw disk access):
+# AmbientCapabilities=CAP_SYS_RAWIO
+# CapabilityBoundingSet=CAP_SYS_RAWIO
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=vpsguard-agent
+
+[Install]
+WantedBy=multi-user.target

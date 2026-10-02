@@ -1,0 +1,30 @@
+{
+  "name": "VPSGuard — VPS/VDS Monitoring",
+  "short_name": "VPSGuard",
+  "description": "Real-time monitoring, alerting and remote control for your VPS/VDS fleet.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Servers", "url": "/servers" },
+    { "name": "Alerts", "url": "/alerts" }
+  ]
+}

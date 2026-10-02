@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vpsguard-agent"
+version = "1.0.0"
+description = "VPSGuard monitoring agent for Linux VPS/VDS servers"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "VPSGuard" }]
+keywords = ["monitoring", "metrics", "vps", "agent", "systemd"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: No Input/Output (Daemon)",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: System :: Monitoring",
+]
+dependencies = [
+    "psutil>=5.9",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+vpsguard-agent = "vpsguard_agent.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["vpsguard_agent*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Lets the suite run straight from a checkout without installing the package.
+pythonpath = ["."]

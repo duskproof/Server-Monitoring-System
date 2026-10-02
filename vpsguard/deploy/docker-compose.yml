@@ -1,0 +1,154 @@
+name: vpsguard
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vpsguard-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-vpsguard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-vpsguard}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vpsguard}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [vpsguard]
+
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: vpsguard-influxdb
+    restart: unless-stopped
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUX_USER:-vpsguard}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_PASSWORD:?INFLUX_PASSWORD is required}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_ORG:-vpsguard}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUX_BUCKET:-metrics}
+      DOCKER_INFLUXDB_INIT_RETENTION: ${INFLUX_RETENTION:-30d}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN:?INFLUX_TOKEN is required}
+    volumes:
+      - influx_data:/var/lib/influxdb2
+      - influx_config:/etc/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks: [vpsguard]
+
+  redis:
+    image: redis:7-alpine
+    container_name: vpsguard-redis
+    restart: unless-stopped
+    command: >
+      redis-server --appendonly yes
+      ${REDIS_PASSWORD:+--requirepass ${REDIS_PASSWORD}}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [vpsguard]
+
+  server:
+    build:
+      context: ../server
+      dockerfile: Dockerfile
+    container_name: vpsguard-server
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      API_PREFIX: api/v1
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-vpsguard}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-vpsguard}
+      POSTGRES_SYNCHRONIZE: ${POSTGRES_SYNCHRONIZE:-true}
+      INFLUX_URL: http://influxdb:8086
+      INFLUX_TOKEN: ${INFLUX_TOKEN}
+      INFLUX_ORG: ${INFLUX_ORG:-vpsguard}
+      INFLUX_BUCKET: ${INFLUX_BUCKET:-metrics}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET is required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
+      JWT_ACCESS_TTL: 15m
+      JWT_REFRESH_TTL: 7d
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@vpsguard.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:4000}
+      AGENT_OFFLINE_AFTER_SECONDS: ${AGENT_OFFLINE_AFTER_SECONDS:-120}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-vpsguard@example.com}
+    ports:
+      - "${SERVER_PORT:-4000}:4000"
+    volumes:
+      - ../agent/packaging/install.sh:/app/install.sh:ro
+      - ../agent/packaging/download:/app/download:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+      influxdb: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    networks: [vpsguard]
+
+  dashboard:
+    build:
+      context: ../dashboard
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:4000}
+        NEXT_PUBLIC_WS_URL: ${PUBLIC_WS_URL:-http://localhost:4000}
+    container_name: vpsguard-dashboard
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:4000}
+      NEXT_PUBLIC_WS_URL: ${PUBLIC_WS_URL:-http://localhost:4000}
+    ports:
+      - "${DASHBOARD_PORT:-3000}:3000"
+    depends_on:
+      - server
+    networks: [vpsguard]
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: vpsguard-nginx
+    restart: unless-stopped
+    profiles: ["tls"]
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ../agent/packaging/install.sh:/var/www/install.sh:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - server
+      - dashboard
+    networks: [vpsguard]
+
+volumes:
+  postgres_data:
+  influx_data:
+  influx_config:
+  redis_data:
+
+networks:
+  vpsguard:
+    driver: bridge
