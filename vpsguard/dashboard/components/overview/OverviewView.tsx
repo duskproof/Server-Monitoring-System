@@ -185,7 +185,7 @@ export function OverviewView() {
           icon={<BellRing className="h-5 w-5" />}
           hint={
             derived.firingAlerts > 0 ? (
-              <Link href="/alerts" className="text-primary hover:underline">
+              <Link href="/cabinet/alerts" className="text-primary hover:underline">
                 Review now
               </Link>
             ) : (
@@ -207,7 +207,7 @@ export function OverviewView() {
         <div className="flex items-center gap-2">
           <ReportsButton servers={servers} />
           <Link
-            href="/servers"
+            href="/cabinet/servers"
             className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-medium text-primary-fg transition-colors hover:bg-primary/90"
           >
             Manage servers
@@ -256,7 +256,7 @@ export function OverviewView() {
             description="Latest events from every server"
             icon={<BellRing className="h-4 w-4" />}
             action={
-              <Link href="/alerts" className="text-xs font-medium text-primary hover:underline">
+              <Link href="/cabinet/alerts" className="text-xs font-medium text-primary hover:underline">
                 View all
               </Link>
             }
@@ -280,7 +280,7 @@ export function OverviewView() {
               recentAlerts.map((alert) => (
                 <Link
                   key={alert.id}
-                  href={`/servers/${alert.serverId}`}
+                  href={`/cabinet/servers/${alert.serverId}`}
                   className="block px-4 py-3 transition-colors hover:bg-elevated/50"
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -307,7 +307,7 @@ export function OverviewView() {
           description="Live CPU trend of the most loaded machines"
           icon={<Cpu className="h-4 w-4" />}
           action={
-            <Link href="/servers" className="text-xs font-medium text-primary hover:underline">
+            <Link href="/cabinet/servers" className="text-xs font-medium text-primary hover:underline">
               All servers
             </Link>
           }
@@ -326,7 +326,7 @@ export function OverviewView() {
             description="Add your first server to start collecting metrics."
             action={
               <Link
-                href="/servers"
+                href="/cabinet/servers"
                 className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-fg hover:bg-primary/90"
               >
                 Add a server
@@ -338,7 +338,7 @@ export function OverviewView() {
             {busiestServers.map((server) => (
               <Link
                 key={server.id}
-                href={`/servers/${server.id}`}
+                href={`/cabinet/servers/${server.id}`}
                 className="focus-ring rounded-xl border border-line bg-bg/40 p-3 transition-colors hover:border-primary/40"
               >
                 <div className="flex items-center justify-between gap-2">

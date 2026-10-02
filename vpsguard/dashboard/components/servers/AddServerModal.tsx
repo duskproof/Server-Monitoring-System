@@ -136,7 +136,7 @@ export function AddServerModal({ open, onClose }: AddServerModalProps) {
               Close
             </Button>
             <Link
-              href={`/servers/${created.id}`}
+              href={`/cabinet/servers/${created.id}`}
               className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-fg transition-colors hover:bg-primary/90"
             >
               <ServerIcon className="h-4 w-4" />

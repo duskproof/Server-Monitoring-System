@@ -120,7 +120,7 @@ export function ServerDetailView({ serverId }: { serverId: string }) {
       if (key === 'overview') params.delete('tab');
       else params.set('tab', key);
       const queryString = params.toString();
-      router.replace(`/servers/${serverId}${queryString ? `?${queryString}` : ''}`, { scroll: false });
+      router.replace(`/cabinet/servers/${serverId}${queryString ? `?${queryString}` : ''}`, { scroll: false });
     },
     [router, searchParams, serverId],
   );
@@ -183,7 +183,7 @@ export function ServerDetailView({ serverId }: { serverId: string }) {
         description={errorMessage(query.error, 'This server may have been deleted or you lack access to it.')}
         action={
           <Link
-            href="/servers"
+            href="/cabinet/servers"
             className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-fg hover:bg-primary/90"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -197,7 +197,7 @@ export function ServerDetailView({ serverId }: { serverId: string }) {
   return (
     <div className="space-y-5">
       <Link
-        href="/servers"
+        href="/cabinet/servers"
         className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-content"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -273,7 +273,7 @@ export function ServerDetailView({ serverId }: { serverId: string }) {
         onConfirm={async () => {
           await deleteServer.mutateAsync(server.id).catch(() => undefined);
           setConfirmDelete(false);
-          router.push('/servers');
+          router.push('/cabinet/servers');
         }}
         onCancel={() => setConfirmDelete(false)}
       />

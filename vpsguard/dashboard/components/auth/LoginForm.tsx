@@ -37,7 +37,7 @@ export function LoginForm() {
       const user = await login({ email: email.trim(), password });
       toast.success(`Welcome back, ${user.name || user.email}`);
       const next = searchParams.get('next');
-      router.replace(next && next.startsWith('/') ? next : '/');
+      router.replace(next && next.startsWith('/') ? next : '/cabinet');
       router.refresh();
     } catch (error) {
       toast.error(errorMessage(error, 'Sign-in failed. Check your credentials.'));

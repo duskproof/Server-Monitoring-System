@@ -43,7 +43,7 @@ export function RegisterForm() {
     try {
       await register({ email: email.trim(), password });
       toast.success('Cabinet created — you are its admin');
-      router.replace('/');
+      router.replace('/cabinet');
       router.refresh();
     } catch (error) {
       toast.error(errorMessage(error, 'Registration failed. Please try again.'));

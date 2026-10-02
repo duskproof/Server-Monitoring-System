@@ -13,7 +13,7 @@ export default function NotFound() {
           The page you are looking for does not exist or has been moved.
         </p>
         <Link
-          href="/"
+          href="/cabinet"
           className="mt-6 inline-flex h-10 w-full items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-fg transition-colors hover:bg-primary/90"
         >
           Back to overview

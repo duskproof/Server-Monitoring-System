@@ -56,14 +56,14 @@ export function GlobalAlertListener() {
               </p>
               <div className="mt-2 flex items-center gap-3">
                 <Link
-                  href="/alerts"
+                  href="/cabinet/alerts"
                   onClick={() => toast.dismiss(instance.id)}
                   className="text-xs font-medium text-primary hover:underline"
                 >
                   View alerts
                 </Link>
                 <Link
-                  href={`/servers/${alert.serverId}`}
+                  href={`/cabinet/servers/${alert.serverId}`}
                   onClick={() => toast.dismiss(instance.id)}
                   className="text-xs font-medium text-muted hover:text-content"
                 >

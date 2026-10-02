@@ -276,7 +276,7 @@ export function ServersView() {
               {sorted.map((server) => (
                 <TR key={server.id}>
                   <TD>
-                    <Link href={`/servers/${server.id}`} className="font-medium text-content hover:text-primary">
+                    <Link href={`/cabinet/servers/${server.id}`} className="font-medium text-content hover:text-primary">
                       {server.name}
                     </Link>
                     <p className="truncate text-xs text-muted">{server.osInfo ?? server.hostname ?? '—'}</p>
@@ -319,14 +319,14 @@ export function ServersView() {
                         className="absolute right-3 top-[calc(100%-6px)] z-20 w-44 animate-fade-in overflow-hidden rounded-xl border border-line bg-surface text-left shadow-xl"
                       >
                         <Link
-                          href={`/servers/${server.id}`}
+                          href={`/cabinet/servers/${server.id}`}
                           className="flex items-center gap-2 px-3 py-2 text-sm text-muted transition-colors hover:bg-elevated hover:text-content"
                         >
                           <ServerIcon className="h-4 w-4" />
                           Details
                         </Link>
                         <Link
-                          href={`/servers/${server.id}?tab=terminal`}
+                          href={`/cabinet/servers/${server.id}?tab=terminal`}
                           className="flex items-center gap-2 px-3 py-2 text-sm text-muted transition-colors hover:bg-elevated hover:text-content"
                         >
                           <Terminal className="h-4 w-4" />

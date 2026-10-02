@@ -19,10 +19,10 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/', label: 'Overview', icon: <LayoutDashboard className="h-[18px] w-[18px]" />, exact: true },
-  { href: '/servers', label: 'Servers', icon: <Server className="h-[18px] w-[18px]" /> },
-  { href: '/alerts', label: 'Alerts', icon: <BellRing className="h-[18px] w-[18px]" /> },
-  { href: '/settings', label: 'Settings', icon: <Settings className="h-[18px] w-[18px]" /> },
+  { href: '/cabinet', label: 'Overview', icon: <LayoutDashboard className="h-[18px] w-[18px]" />, exact: true },
+  { href: '/cabinet/servers', label: 'Servers', icon: <Server className="h-[18px] w-[18px]" /> },
+  { href: '/cabinet/alerts', label: 'Alerts', icon: <BellRing className="h-[18px] w-[18px]" /> },
+  { href: '/cabinet/settings', label: 'Settings', icon: <Settings className="h-[18px] w-[18px]" /> },
 ];
 
 export function Sidebar() {
@@ -62,7 +62,7 @@ export function Sidebar() {
           >
             <span className="shrink-0">{item.icon}</span>
             <span className={cn('flex-1 truncate', collapsed && 'lg:hidden')}>{item.label}</span>
-            {item.href === '/alerts' && firingCount > 0 ? (
+            {item.href === '/cabinet/alerts' && firingCount > 0 ? (
               <span
                 className={cn(
                   'inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-semibold text-white',

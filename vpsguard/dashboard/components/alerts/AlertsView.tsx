@@ -171,7 +171,7 @@ export function AlertsView() {
                       </p>
                     </TD>
                     <TD>
-                      <Link href={`/servers/${alert.serverId}`} className="text-sm text-primary hover:underline">
+                      <Link href={`/cabinet/servers/${alert.serverId}`} className="text-sm text-primary hover:underline">
                         {alert.serverName}
                       </Link>
                     </TD>
